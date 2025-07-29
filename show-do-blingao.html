@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show do Blingão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle, #0f3a21, #071e10);
+        }
+        .bling-gradient {
+            background: linear-gradient(45deg, #a8ff78, #78ffd6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .answer-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .answer-option:hover:not(:disabled) {
+            transform: scale(1.05);
+            background-color: #1e6b43;
+        }
+        .correct {
+            background-color: #28a745 !important;
+            color: white !important;
+            animation: pulse 0.5s 2;
+        }
+        .incorrect {
+            background-color: #dc3545 !important;
+            color: white !important;
+            animation: shake 0.5s;
+        }
+        .help-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #6c757d;
+        }
+        main.is-transitioning {
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        #modal {
+            transition: opacity 0.3s ease;
+        }
+        #timer {
+            transition: color 0.5s, transform 0.5s;
+        }
+        #timer.low-time {
+            color: #f59e0b; /* amber-500 */
+            transform: scale(1.1);
+        }
+        #timer.critical-time {
+            color: #ef4444; /* red-500 */
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body class="text-white flex items-center justify-center min-h-screen p-4">
+
+    <div id="game-container" class="w-full max-w-6xl mx-auto hidden">
+        <header class="text-center mb-6">
+            <h1 class="text-5xl font-black uppercase bling-gradient">Show do Blingão</h1>
+            <p class="text-lg text-gray-300">Teste seus conhecimentos sobre o Bling!</p>
+        </header>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Game Area -->
+            <main class="w-full lg:w-3/4 bg-green-900 bg-opacity-30 p-6 rounded-2xl shadow-2xl transition-opacity duration-300">
+                <!-- Info Header: Prize Value and Timer -->
+                <div id="info-header" class="flex justify-between items-center mb-4 text-2xl font-bold px-2">
+                    <span id="prize-value-display" class="text-green-300"></span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-yellow-300">Tempo:</span>
+                        <span id="timer" class="text-4xl text-yellow-300">45</span>
+                    </div>
+                </div>
+
+                <!-- Question -->
+                <div id="question-container" class="mb-6 bg-gray-800 p-6 rounded-lg">
+                    <p id="question-text" class="text-2xl font-bold leading-relaxed"></p>
+                </div>
+
+                <!-- Answers -->
+                <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options will be inserted here by JS -->
+                </div>
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="w-full lg:w-1/4 flex flex-col gap-4">
+                <!-- Help Buttons -->
+                <div class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl text-center">
+                    <h2 class="font-bold mb-3 text-xl">Ajudas</h2>
+                    <div class="flex justify-around">
+                        <button id="help-skip" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Pular</button>
+                        <button id="help-eliminate" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Eliminar 2</button>
+                    </div>
+                </div>
+
+                <!-- Stop Button: New Position -->
+                <button id="stop-button" class="w-full bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105">PARAR</button>
+
+                <!-- Prize Table -->
+                <div id="prize-table" class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl flex-grow">
+                     <h2 class="font-bold mb-3 text-xl text-center">Prêmios</h2>
+                    <ul id="prize-list" class="space-y-1 text-lg">
+                        <!-- Prizes will be inserted here by JS -->
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
+            <h2 id="modal-title" class="text-4xl font-black mb-4"></h2>
+            <p id="modal-text" class="text-xl mb-6"></p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="modal-button" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
+                <button id="back-to-start-button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading/Start Screen -->
+    <div id="start-screen" class="text-center">
+        <h1 class="text-6xl font-black uppercase bling-gradient mb-4 pb-2">Show do Blingão</h1>
+        <p class="text-xl text-gray-300 mb-6">Pronto para testar seus conhecimentos e ganhar prêmios?</p>
+        
+        <!-- Rules Section -->
+        <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-lg mx-auto mb-8 text-left text-gray-200">
+            <h2 class="text-2xl font-bold text-center mb-4 text-white">Regras do Jogo</h2>
+            <ul class="list-disc list-inside space-y-2">
+                <li>Você tem <span class="font-bold text-yellow-300">45 segundos</span> para responder cada pergunta.</li>
+                <li>Se o tempo acabar, o jogo termina!</li>
+                <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
+            </ul>
+        </div>
+
+        <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Começar!</button>
+    </div>
+
+
+    <script>
+    window.onload = () => {
+        const rawQuestionsData = `
+1. Amazon - Atualizações de Categorias Pergunta: Qual foi a atualização recente na integração Bling-Amazon que impactou as categorias?
+A) Mudança do layout do painel da Amazon.
+B) Migração da API da V2 para V3.
+C) Nova política de frete da Amazon.
+D) Requisito de mais fotos por produto. Resposta Correta: B) Migração da API da V2 para V3.
+2. Amazon - Alerta de Categoria Pergunta: O que indica o ponto de exclamação em uma categoria de produto no Bling para Amazon?
+A) Que a categoria foi desativada.
+B) Que a categoria precisa ser atualizada para continuar exportando anúncios.
+C) Que a categoria está com erro de preenchimento.
+D) Que a categoria é opcional e não obrigatória. Resposta Correta: B) Que a categoria precisa ser atualizada para continuar exportando anúncios.
+3. Amazon - Consequência da Não Atualização Pergunta: Se a categoria não for atualizada após o período indicado, o que acontecerá com os pedidos no Bling?
+A) O Bling vai parar de funcionar e não receberá mais pedidos.
+B) Os pedidos continuarão a ser recebidos, mas a exportação de produtos pode apresentar erro de categorização.
+C) Os pedidos serão automaticamente cancelados.
+D) A sincronização de estoque será permanentemente bloqueada. Resposta Correta: B) Os pedidos continuarão a ser recebidos, mas a exportação de produtos pode apresentar erro de categorização.
+4. Amazon - Primeiro Passo da Correção Pergunta: Qual o primeiro passo para corrigir uma categoria da Amazon no Bling que apresenta o ponto de exclamação?
+A) Excluir o produto e cadastrá-lo novamente.
+B) Revincular a categoria, desmarcando o vínculo existente e salvando.
+C) Contatar o suporte da Amazon diretamente.
+D) Alterar o nome da categoria no Bling. Resposta Correta: B) Revincular a categoria, desmarcando o vínculo existente e salvando.
+5. Amazon - Restabelecendo o Vínculo Pergunta: Após desvincular uma categoria na Amazon, qual o próximo passo para restabelecer a comunicação?
+A) Criar uma nova categoria do zero.
+B) Vincular categorias Multiloja, selecionar Amazon e montar a nova estrutura de categorização. C) Exportar os produtos para a Amazon novamente.
+D) Atualizar a página do Bling e aguardar a correção automática. Resposta Correta: B) Vincular categorias Multiloja, selecionar Amazon e montar a nova estrutura de categorização.
+6. Amazon - Campos Customizados Pergunta: O que são "campos customizados" no contexto da exportação de produtos para a Amazon?
+A) Campos opcionais para enriquecer a descrição.
+B) Informações obrigatórias que precisam ser remapeadas ou criadas para a categoria.
+C) Dados de contato do cliente para envio.
+D) Configurações de frete específicas da Amazon. Resposta Correta: B) Informações obrigatórias que precisam ser remapeadas ou criadas para a categoria.
+7. Amazon - Campo Existente Pergunta: Como o Bling identifica que um campo customizado já existe para remapeamento?
+A) Ele cria um novo campo automaticamente.
+B) Ele notifica que o campo já existe e não permite criar um novo com o mesmo nome.
+C) Ele ignora o campo e permite a exportação.
+D) Ele duplica o campo sem aviso. Resposta Correta: B) Ele notifica que o campo já existe e não permite criar um novo com o mesmo nome.
+8. Amazon - Mapeamento de Opções Pergunta: Qual é a recomendação para o mapeamento de opções de campo customizado, como "País de Origem"?
+A) Mapear todas as opções disponíveis.
+B) Mapear apenas as opções necessárias, como "Brasil".
+C) Deixar em branco para que a Amazon preencha.
+D) Criar um novo campo para cada opção. Resposta Correta: B) Mapear apenas as opções necessárias, como "Brasil".
+9. Amazon - Erro de Exportação Pergunta: O que pode causar um erro de exportação de produto para a Amazon, mesmo após a atualização das categorias?
+A) Estoque insuficiente no Bling.
+B) Descrição complementar do produto não atingindo a quantidade mínima de caracteres permitida pela Amazon.
+C) Imagens com baixa resolução.
+D) Preço de venda muito baixo. Resposta Correta: B) Descrição complementar do produto não atingindo a quantidade mínima de caracteres permitida pela Amazon.
+10. Amazon - Sem Triângulo de Aviso Pergunta: Para quem não possui o triângulo de aviso nas categorias da Amazon no Bling, qual a ação necessária?
+A) Fazer todas as alterações de API mesmo assim.
+B) Exportar todos os produtos novamente.
+C) Nenhuma alteração é necessária, pode continuar usando normalmente.
+D) Contatar o suporte do Bling para forçar a atualização. Resposta Correta: C) Nenhuma alteração é necessária, pode continuar usando normalmente.
+11. Amazon - Subcategorias Iguais Pergunta: Quando o triângulo de aviso aparece, mas as subcategorias para vinculação parecem iguais às anteriores, o que isso significa?
+A) É um erro no Bling que precisa ser reportado.
+B) A estrutura da categorização pode ser a mesma, mas é necessário refazer o vínculo para a nova API (V3).
+C) O produto não pode ser exportado para essa categoria.
+D) Apenas produtos novos podem usar as novas categorias. Resposta Correta: B) A estrutura da categorização pode ser a mesma, mas é necessário refazer o vínculo para a nova API (V3).
+12. Amazon - Vínculo de Categoria Dupla Pergunta: É recomendado usar a mesma categoria do Bling vinculada a duas categorias da Amazon?
+A) Sim, para aumentar a visibilidade do produto.
+B) Não é recomendado, pode causar problemas na exportação e reduzir a visibilidade do produto.
+C) Sim, desde que os produtos sejam similares.
+D) A Amazon notifica se a categoria está errada, então não há problema. Resposta Correta: B) Não é recomendado, pode causar problemas na exportação e reduzir a visibilidade do produto.
+13. Amazon - Artigo de Suporte Pergunta: Onde se encontra o artigo sobre os requisitos dos marcadores para problemas de descrição na Amazon?
+A) No painel da Amazon.
+B) No site do Bling (central de ajuda).
+C) No chat do YouTube ao vivo.
+D) Enviado por e-mail para os usuários. Resposta Correta: B) No site do Bling (central de ajuda).
+14. Amazon - Prazo de Atualização Pergunta: Qual o prazo para realizar as atualizações de categoria da Amazon no Bling?
+A) 15 dias.
+B) 30 dias.
+C) 55 dias, contando regressivamente.
+D) 90 dias, sem urgência. Resposta Correta: C) 55 dias, contando regressivamente.
+15. Amazon - Sincronização de Estoque Pergunta: Se um produto já está vinculado a uma categoria antiga da Amazon e o estoque para de sincronizar, o que pode ter ocorrido?
+A) O produto foi pausado na Amazon.
+B) A categoria não está mais comunicando devido à atualização da API.
+C) O Bling está com problemas de conexão.
+D) O preço do produto foi alterado. Resposta Correta: B) A categoria não está mais comunicando devido à atualização da API.
+16. Mercado Livre - Série da Nota Fiscal Pergunta: Qual a função da "série da nota fiscal" no Bling?
+A) Indica o tipo de produto vendido.
+B) Representa a faixa numérica das emissões das notas.
+C) Classifica o cliente em pessoa física ou jurídica.
+D) Define o regime tributário da empresa. Resposta Correta: B) Representa a faixa numérica das emissões das notas.
+17. Mercado Livre - Múltiplos Emissores Pergunta: Se você emite notas fiscais tanto pelo Bling quanto diretamente pelo Mercado Livre, como deve ser a série da nota?
+A) A mesma série para ambos os sistemas.
+B) Série 1 para o Bling e série 2 para o Mercado Livre (ou vice-versa).
+C) Uma série diferente para cada tipo de produto.
+D) O número da série é irrelevante. Resposta Correta: B) Série 1 para o Bling e série 2 para o Mercado Livre (ou vice-versa).
+18. Mercado Livre - Informação Obrigatória para NF Pergunta: Qual informação é obrigatória para emitir nota fiscal dentro do Bling?
+A) Endereço de e-mail do cliente.
+B) Inscrição Estadual.
+C) Número de telefone do fornecedor.
+D) Razão social do contador. Resposta Correta: B) Inscrição Estadual.
+19. Mercado Livre - Alteração da Série da NF Pergunta: Onde é possível alterar a série da nota fiscal no Bling?
+A) No cadastro do produto.
+B) Dentro da natureza de operação.
+C) No painel de importação de pedidos.
+D) Nas configurações de logística. Resposta Correta: B) Dentro da natureza de operação.
+20. Mercado Livre - Propósito do Certificado Digital Pergunta: Qual o propósito do certificado digital para emissão de notas fiscais no Bling?
+A) Apenas para agilizar o processo de exportação.
+B) Validar que a empresa é a emitente e garantir a segurança na autorização da nota.
+C) Registrar os produtos no CFOP.
+D) Enviar e-mails automáticos para clientes. Resposta Correta: B) Validar que a empresa é a emitente e garantir a segurança na autorização da nota.
+21. Mercado Livre - Modelo de Certificado A1 Pergunta: Qual o modelo de certificado digital é indicado para todos os sistemas operacionais (Mac, Linux, Windows) e é instalado em nuvem?
+A) Modelo A3.
+B) Modelo A1.
+C) Certificado SSL.
+D) Certificado PF. Resposta Correta: B) Modelo A1.
+22. Mercado Livre - Ambiente de Emissão Pergunta: Qual a principal diferença entre o ambiente de "homologação" e "produção" no Bling para emissão de notas?
+A) Homologação é para testes sem valor fiscal, produção é para notas reais.
+B) Homologação é para vendas no varejo, produção para atacado.
+C) Homologação permite mais produtos, produção tem limite.
+D) Homologação sincroniza com um marketplace, produção com todos. Resposta Correta: A) Homologação é para testes sem valor fiscal, produção é para notas reais.
+23. Mercado Livre - Pré-integração Pergunta: O que é recomendado fazer antes de realizar a integração com o Mercado Livre no Bling?
+A) Enviar todos os produtos para o Mercado Livre.
+B) Garantir que a conta do Mercado Livre não tenha pendências e ter pelo menos um produto cadastrado lá.
+C) Ativar a geração automática de notas fiscais.
+D) Configurar a logística antes da integração. Resposta Correta: B) Garantir que a conta do Mercado Livre não tenha pendências e ter pelo menos um produto cadastrado lá.
+24. Mercado Livre - Sincronização de Estoque Bling Pergunta: O que acontece se a opção "Gerenciar meu estoque conforme o Bling" for ativada na configuração do Mercado Livre?
+A) O Mercado Livre gerenciará o estoque e enviará atualizações para o Bling.
+B) Todo o estoque do Bling será sincronizado para o Mercado Livre.
+C) A sincronização de estoque será desativada.
+D) Apenas o estoque inicial será enviado. Resposta Correta: B) Todo o estoque do Bling será sincronizado para o Mercado Livre.
+25. Mercado Livre - Status de Pedido Aprovado Pergunta: Em um cenário de importação de vendas do Mercado Livre para o Bling, qual a situação de pedido no Bling para um pedido "aprovado" no Mercado Livre?
+A) Em Aberto.
+B) Atendido.
+C) Em Andamento.
+D) Cancelado. Resposta Correta: A) Em Aberto.
+26. Mercado Livre - Configuração de Logística Pergunta: Por que é importante configurar a logística do Mercado Envios no Bling após a integração?
+A) Para o Bling gerar as etiquetas de envio e organizar o processo.
+B) Para o Mercado Livre controlar o estoque.
+C) Para o cliente receber as mensagens de rastreamento por e-mail.
+D) Para o Bling fazer o cálculo automático do frete. Resposta Correta: A) Para o Bling gerar as etiquetas de envio e organizar o processo.
+27. Mercado Livre/Shopee - Campos Customizados como Ficha Técnica Pergunta: O que são "campos customizados" no contexto do Mercado Livre e Shopee?
+A) Campos que podem ser ignorados na exportação.
+B) Informações adicionais para a descrição do produto.
+C) Itens obrigatórios para diversos marketplaces, funcionando como ficha técnica do produto.
+D) Apenas para uso interno do Bling. Resposta Correta: C) Itens obrigatórios para diversos marketplaces, funcionando como ficha técnica do produto.
+28. Bling - Categorias x Tags Pergunta: Qual a diferença entre "Categorias" e "Tags" no Bling?
+A) Categorias são para lojas virtuais/marketplaces, Tags para ações internas do sistema.
+B) Categorias são para produtos físicos, Tags para serviços.
+C) Categorias são opcionais, Tags são obrigatórias.
+D) Não há diferença, ambos são sinônimos. Resposta Correta: A) Categorias são para lojas virtuais/marketplaces, Tags para ações internas do sistema.
+29. Mercado Livre - Campos Obrigatórios Pergunta: Quais são os campos customizados obrigatórios para o Mercado Livre, mencionados no treinamento?
+A) País de Origem e Dimensão.
+B) Marca e Modelo.
+C) Cor e Tamanho.
+D) GTIN/EAN e NCM. Resposta Correta: B) Marca e Modelo.
+30. Bling - Função do SKU Pergunta: Qual a função principal do SKU (Stock Keeping Unit) em um cadastro de produto no Bling?
+A) Serve como preço de venda do produto.
+B) É o CPF interno do produto, usado para localização e padronização entre canais.
+C) É o código de barras universal do produto.
+D) Define o tipo de variação do produto. Resposta Correta: B) É o CPF interno do produto, usado para localização e padronização entre canais.
+31. Mercado Livre - SKU na Importação Pergunta: No Bling, o que acontece com um produto já existente se um produto importado do Mercado Livre tiver o mesmo SKU?
+A) O Bling duplicará o produto.
+B) O Bling atualizará o cadastro do produto existente.
+C) O Bling irá ignorar a importação deste produto.
+D) O Bling solicitará uma correção manual. Resposta Correta: B) O Bling atualizará o cadastro do produto existente.
+32. Bling - Campos Obrigatórios para NF Pergunta: Qual a importância de preencher NCM, Origem e Unidade para os produtos importados para o Bling?
+A) São campos opcionais para otimização.
+B) São itens obrigatórios para a geração da nota fiscal.
+C) Apenas para controle interno do estoque.
+D) Para cálculo de frete. Resposta Correta: B) São itens obrigatórios para a geração da nota fiscal.
+33. Bling - Vantagem do Cadastro Completo Pergunta: Qual a principal vantagem de ter um cadastro de produto 100% preenchido no Bling, mesmo que não seja obrigatório para o Marketplace?
+A) Aumenta a velocidade de sincronização.
+B) Diminui a concorrência no marketplace.
+C) Evita erros futuros e facilita a exportação para outros canais.
+D) Melhora o posicionamento nos buscadores. Resposta Correta: C) Evita erros futuros e facilita a exportação para outros canais.
+34. Bling - Gerenciador de Transições Pergunta: Qual a função do "gerenciador de transições" no Bling?
+A) Organizar as conversas do chat com clientes.
+B) Automatizar ações como lançamento de estoque e contas ao mudar a situação de um pedido.
+C) Gerar relatórios financeiros de vendas.
+D) Conectar diferentes marketplaces ao Bling. Resposta Correta: B) Automatizar ações como lançamento de estoque e contas ao mudar a situação de um pedido.
+35. Bling - Estoque e Nota Não Autorizada Pergunta: O que acontece com o estoque no Bling se a nota fiscal não for autorizada devido a um certificado inválido?
+A) O estoque é lançado automaticamente.
+B) O estoque não é lançado.
+C) O estoque é estornado automaticamente.
+D) O Bling aguarda a correção do certificado para lançar o estoque. Resposta Correta: B) O estoque não é lançado.
+36. Estoque - Entrada Manual Pergunta: Qual a forma mais simples de fazer uma entrada de estoque manual no Bling?
+A) Via importação de XML da nota fiscal.
+B) Clicando no cubo de estoque no cadastro do produto e incluindo um lançamento.
+C) Através do relatório de balanço.
+D) Pela importação de planilha de produtos. Resposta Correta: B) Clicando no cubo de estoque no cadastro do produto e incluindo um lançamento.
+37. Estoque - Preço de Custo Pergunta: O que é o "preço de custo" de um produto no Bling?
+A) O preço de venda para o cliente.
+B) O preço de compra mais os impostos, frete e outras despesas.
+C) Apenas o preço de compra do fornecedor.
+D) O valor de mercado do produto. Resposta Correta: B) O preço de compra mais os impostos, frete e outras despesas.
+38. Estoque - Balanço Pergunta: O que significa um "balanço" no controle de estoque do Bling?
+A) Uma saída de estoque por venda.
+B) Uma atualização que sobrescreve o saldo anterior do estoque.
+C) Apenas uma entrada de novas mercadorias.
+D) O registro de produtos danificados. Resposta Correta: B) Uma atualização que sobrescreve o saldo anterior do estoque.
+39. Estoque - Sincronização com Loja Virtual Pergunta: Para que o estoque sincronize corretamente com uma loja virtual, o que precisa estar preenchido no Bling?
+A) Apenas a descrição do produto.
+B) O produto precisa estar vinculado com a loja (carrinho Multiloja) e ter os IDs preenchidos.
+C) O preço de venda do produto.
+D) O logotipo da loja. Resposta Correta: B) O produto precisa estar vinculado com a loja (carrinho Multiloja) e ter os IDs preenchidos.
+40. Estoque - Configuração de Sincronização Pergunta: Onde se configura a opção "Atualizar estoque do Bling conforme loja virtual"?
+A) No cadastro do produto.
+B) Na central de extensões, dentro das configurações da integração da loja (aba "Produto").
+C) No menu "Estoque", "Lançamentos de Estoque".
+D) Na natureza de operação. Resposta Correta: B) Na central de extensões, dentro das configurações da integração da loja (aba "Produto").
+41. Estoque - Atualização por Planilha Pergunta: Qual a utilidade de gerar uma planilha de backup de estoque no Bling?
+A) Para enviar aos fornecedores.
+B) Para fazer o balanço e atualização massiva do estoque.
+C) Para conferir as vendas diárias.
+D) Para criar novos produtos. Resposta Correta: B) Para fazer o balanço e atualização massiva do estoque.
+42. Estoque - Entrada vs. Balanço Pergunta: Qual a diferença principal entre "entrada" e "balanço" no lançamento de estoque manual?
+A) Entrada adiciona ao saldo, balanço sempre atualiza o saldo para a quantidade inserida.
+B) Entrada subtrai do saldo, balanço adiciona.
+C) Entrada é para vendas, balanço para compras.
+D) Não há diferença, são sinônimos. Resposta Correta: A) Entrada adiciona ao saldo, balanço sempre atualiza o saldo para a quantidade inserida.
+43. Estoque - Conferência de Estoque Pergunta: O que é a "Conferência de Estoque" no Bling e como ela é utilizada?
+A) Uma ferramenta para gerenciar pedidos de compra.
+B) Um recurso para contagem de estoque, ideal para uso com celular ou leitor de código de barras.
+C) Um relatório de vendas por período.
+D) Um módulo para auditoria fiscal. Resposta Correta: B) Um recurso para contagem de estoque, ideal para uso com celular ou leitor de código de barras.
+44. Estoque - Vínculo Produto-Fornecedor Pergunta: Qual a principal função de vincular um produto a um fornecedor na nota de entrada?
+A) Cadastrar o fornecedor no Bling.
+B) Criar um histórico de quanto o produto custou e de qual fornecedor foi comprado.
+C) Gerar automaticamente o código de barras do produto.
+D) Ativar a sincronização automática de preços. Resposta Correta: B) Criar um histórico de quanto o produto custou e de qual fornecedor foi comprado.
+45. Estoque - Formação de Preço Pergunta: Qual recurso do Bling permite calcular o preço de venda de um produto, considerando frete, impostos e markup, a partir de uma nota de entrada?
+A) Lançamento de Estoque.
+B) Formação de Preço.
+C) Gerenciador de Transições.
+D) Balanço de Estoque. Resposta Correta: B) Formação de Preço.
+46. Estoque - Reserva de Estoque Pergunta: O que a ativação da "reserva de estoque" no Bling faz?
+A) Garante o produto para o cliente independentemente do pagamento, diminuindo o saldo disponível nas lojas virtuais.
+B) Bloqueia a venda do produto em todos os canais.
+C) Recomenda a compra de mais unidades.
+D) Aumenta o estoque total do produto. Resposta Correta: A) Garante o produto para o cliente independentemente do pagamento, diminuindo o saldo disponível nas lojas virtuais.
+47. Estoque - Pedidos e Reserva de Estoque Pergunta: Por que é crucial verificar a situação dos pedidos antes de ativar a reserva de estoque?
+A) Pedidos antigos ou com situação incorreta podem reservar estoque indevidamente.
+B) A reserva de estoque só funciona para pedidos novos.
+C) A situação dos pedidos não afeta a reserva de estoque.
+D) Para evitar duplicidade de pedidos. Resposta Correta: A) Pedidos antigos ou com situação incorreta podem reservar estoque indevidamente.
+48. Estoque - Reserva e Gerenciador de Transições Pergunta: Qual a relação entre a "reserva de estoque" e o "gerenciador de transições"?
+A) A reserva de estoque anula a necessidade do gerenciador de transições.
+B) O gerenciador de transições deve estar ativo para que o estoque seja lançado após a nota fiscal, evitando que a reserva de estoque seja desfeita indevidamente.
+C) Ambos são recursos independentes e não se relacionam.
+D) O gerenciador de transições só funciona se a reserva de estoque estiver desativada. Resposta Correta: B) O gerenciador de transições deve estar ativo para que o estoque seja lançado após a nota fiscal, evitando que a reserva de estoque seja desfeita indevidamente.
+49. Estoque - Múltiplos Depósitos Pergunta: Para que serve a funcionalidade de "múltiplos depósitos" no Bling?
+A) Para vender mais produtos em diferentes marketplaces.
+B) Para dividir o estoque por locais (loja física, fullfilment, garantia, etc.) e gerenciar de forma separada.
+C) Para criar diferentes preços de venda.
+D) Para automatizar a emissão de notas fiscais. Resposta Correta: B) Para dividir o estoque por locais (loja física, fullfilment, garantia, etc.) e gerenciar de forma separada.
+50. Estoque - Relatório Curva ABC Pergunta: O que o relatório de "Curva ABC" mostra sobre os produtos?
+A) Produtos com mais vendas e maior lucratividade (A), intermediários (B) e baixa movimentação (C).
+B) Produtos em promoção.
+C) Produtos com estoque zerado.
+D) Produtos com maior número de devoluções. Resposta Correta: A) Produtos com mais vendas e maior lucratividade (A), intermediários (B) e baixa movimentação (C).
+51. Loja Física - Objetivo do Treinamento Pergunta: Qual o principal objetivo do treinamento de "Loja Física" no Bling?
+A) Focar apenas em vendas online.
+B) Explicar como o Bling funciona para vendas presenciais, frente de caixa e controle de comissão.
+C) Apenas configurar a emissão de NF-e.
+D) Detalhar a integração com marketplaces. Resposta Correta: B) Explicar como o Bling funciona para vendas presenciais, frente de caixa e controle de comissão.
+52. Loja Física - NF-e vs. NFC-e Pergunta: Qual a diferença entre Nota Fiscal Eletrônica (NF-e) e Nota Fiscal do Consumidor Eletrônica (NFC-e)?
+A) NF-e é para vendas físicas, NFC-e para vendas online.
+B) NF-e é para vendas para CNPJ/e-commerce/marketplace, NFC-e para vendas presenciais.
+C) NF-e é opcional, NFC-e é obrigatória.
+D) Não há diferença, são o mesmo tipo de documento. Resposta Correta: B) NF-e é para vendas para CNPJ/e-commerce/marketplace, NFC-e para vendas presenciais.
+53. Loja Física - Estado sem NFC-e Pergunta: Qual estado brasileiro não está homologado para emitir a NFC-e pelo Bling?
+A) São Paulo.
+B) Rio Grande do Sul.
+C) Santa Catarina.
+D) Rio de Janeiro. Resposta Correta: C) Santa Catarina.
+54. Loja Física - Indicador de Presença NFC-e Pergunta: Qual o "indicador de presença" deve ser selecionado para emitir uma NFC-e?
+A) Operação via internet.
+B) Operação presencial.
+C) Operação com entrega em domicílio.
+D) Operação em plataforma de e-commerce. Resposta Correta: B) Operação presencial.
+55. Loja Física - CSC da NFC-e Pergunta: Para que serve o "Código de Segurança do Contribuinte (CSC)" na emissão da NFC-e?
+A) É uma chave gerada pelo site do Sefaz que valida a empresa na emissão da nota.
+B) É o código de barras do produto.
+C) Serve para ativar o leitor de código de barras no Bling.
+D) É um código interno para controle de estoque. Resposta Correta: A) É uma chave gerada pelo site do Sefaz que valida a empresa na emissão da nota.
+56. Loja Física - Consulta de NCM Pergunta: Onde se recomenda buscar o NCM (Nomenclatura Comum do Mercosul) de um produto caso o usuário não saiba ou não tenha a nota de compra?
+A) Entrar em contato com o suporte do Bling.
+B) Pesquisar no site do Portal do Siscomex, um site do governo.
+C) Gerar um NCM aleatório no Bling.
+D) Deixar o campo em branco, pois não é obrigatório para NFC-e. Resposta Correta: B) Pesquisar no site do Portal do Siscomex, um site do governo.
+57. Loja Física - GTIN/EAN Pergunta: Qual a função do campo "GTIN/EAN" no cadastro de produto, especialmente para loja física?
+A) É o código interno do produto (SKU).
+B) É o código de barras universal do produto, útil para leitura no frente de caixa.
+C) É um código exclusivo para variações.
+D) Indica a marca do produto. Resposta Correta: B) É o código de barras universal do produto, útil para leitura no frente de caixa.
+58. Loja Física - Cadastro com Variações Pergunta: Qual a principal vantagem de cadastrar produtos com variações (cores, tamanhos) no Bling?
+A) Otimiza o espaço de armazenamento no sistema.
+B) Facilita a venda em plataformas que exigem variações e padroniza a estrutura.
+C) Permite usar o mesmo SKU para produtos diferentes.
+D) Reduz a necessidade de preencher campos obrigatórios. Resposta Correta: B) Facilita a venda em plataformas que exigem variações e padroniza a estrutura.
+59. Loja Física - GTIN/EAN Duplicado Pergunta: Como o Bling lida com produtos que possuem o mesmo GTIN/EAN, mas são diferentes (ex: kits)?
+A) Sugere o uso do SKU para diferenciar e etiquetar, pois o SKU é único por produto.
+B) Impede o cadastro do segundo produto.
+C) Solicita que o usuário altere o GTIN/EAN.
+D) Apenas o primeiro produto com aquele GTIN/EAN pode ser vendido. Resposta Correta: A) Sugere o uso do SKU para diferenciar e etiquetar, pois o SKU é único por produto.
+60. Loja Física - Etiquetas Customizadas Pergunta: Qual a principal utilidade das "etiquetas customizadas" no Bling para loja física?
+A) Apenas para fins estéticos.
+B) Gerar etiquetas com informações personalizadas (logo, SKU, GTIN/EAN, preço) para facilitar a leitura no frente de caixa.
+C) Automatizar a sincronização de estoque.
+D) Criar códigos de barras temporários. Resposta Correta: B) Gerar etiquetas com informações personalizadas (logo, SKU, GTIN/EAN, preço) para facilitar a leitura no frente de caixa.
+61. Loja Física - Cadastro de Loja Física Pergunta: Para que serve a funcionalidade de "cadastrar uma loja física" no Bling, além da loja virtual?
+A) Para emitir notas fiscais diferentes.
+B) Para separar e controlar vendas por ponto de venda (ex: Loja Centro PDV 1) e segmentar preços (atacado/varejo).
+C) Para ter um estoque separado para cada loja.
+D) Para gerenciar vendedores de forma independente. Resposta Correta: B) Para separar e controlar vendas por ponto de venda (ex: Loja Centro PDV 1) e segmentar preços (atacado/varejo).
+62. Loja Física - Formas de Pagamento Pergunta: Qual o objetivo principal de cadastrar formas de pagamento no Bling para a loja física?
+A) Apenas para fins de relatório.
+B) Habilitar a seleção das formas de pagamento no frente de caixa para finalizar uma venda.
+C) Conectar diretamente com o banco.
+D) Emitir boletos para clientes. Resposta Correta: B) Habilitar a seleção das formas de pagamento no frente de caixa para finalizar uma venda.
+63. Loja Física - Integração POS Pergunta: O que são as maquininhas "POS" (Point of Sale) integradas ao Bling?
+A) Maquininhas que emitem boletos.
+B) Maquininhas que integram diretamente com o Bling, facilitando o controle de pagamentos e taxas.
+C) Maquininhas apenas para vendas online.
+D) Maquininhas que controlam o estoque. Resposta Correta: B) Maquininhas que integram diretamente com o Bling, facilitando o controle de pagamentos e taxas.
+64. Loja Física - Vendedor vs. Usuário Pergunta: Qual a diferença de permissões entre um "vendedor" e um "usuário" no Bling?
+A) Vendedor tem acesso a todos os módulos, Usuário apenas a vendas.
+B) Vendedor tem acesso somente a vendas (frente de caixa), Usuário tem acesso a todos os módulos conforme permissão.
+C) Ambos têm as mesmas permissões.
+D) Vendedor pode cadastrar produtos, Usuário não. Resposta Correta: B) Vendedor tem acesso somente a vendas (frente de caixa), Usuário tem acesso a todos os módulos conforme permissão.
+65. Loja Física - Controle de Caixa Pergunta: O que a opção "Controle de Caixa" no frente de caixa do Bling permite?
+A) Apenas registrar as vendas.
+B) Abrir e fechar o caixa, inserindo o valor do troco inicial.
+C) Sincronizar o estoque com a loja virtual.
+D) Gerar relatórios de comissão. Resposta Correta: B) Abrir e fechar o caixa, inserindo o valor do troco inicial.
+66. Loja Física - Registro de Vendas Pergunta: Onde as vendas do frente de caixa são registradas no Bling após inserção?
+A) Diretamente no financeiro.
+B) Em "Vendas", "Pedidos de Venda".
+C) No cadastro de produtos.
+D) No controle de estoque. Resposta Correta: B) Em "Vendas", "Pedidos de Venda".
+67. Loja Física - Gerenciamento de Crediário Pergunta: Qual a recomendação para o usuário que trabalha com crediário no Bling?
+A) Utilizar a forma de pagamento "Contas a Pagar".
+B) Utilizar a forma de pagamento "Contas a Receber" como crediário e cadastrar o cliente com todos os dados.
+C) Registrar cada parcela como uma nova venda.
+D) Não é possível gerenciar crediário no Bling. Resposta Correta: B) Utilizar a forma de pagamento "Contas a Receber" como crediário e cadastrar o cliente com todos os dados.
+68. Loja Física - Sangria no Caixa Pergunta: Para que serve a opção "Sangria" no frente de caixa do Bling?
+A) Injetar dinheiro no caixa.
+B) Retirar dinheiro do caixa.
+C) Abrir o caixa.
+D) Imprimir o último comprovante. Resposta Correta: B) Retirar dinheiro do caixa.
+69. Loja Física - Conferência de Caixa Pergunta: Onde é possível conferir o fechamento diário do caixa no Bling e verificar se os valores fecharam?
+A) Em "Financeiro", "Comissões".
+B) Em "Financeiro", "Controle de Caixa".
+C) Em "Vendas", "Relatórios de Vendas".
+D) No cadastro de vendedores. Resposta Correta: B) Em "Financeiro", "Controle de Caixa".
+70. Loja Física - Gerenciamento de Comissões Pergunta: Qual a principal funcionalidade para gerenciar comissões de vendedores no Bling?
+A) Registrar as comissões por produto.
+B) Fazer o pagamento e registrar a saída financeira das comissões.
+C) Definir descontos para vendedores.
+D) Apenas visualizar o total de vendas por vendedor. Resposta Correta: B) Fazer o pagamento e registrar a saída financeira das comissões.
+71. Shopee - Treinamento Principal Pergunta: Qual o principal foco do treinamento sobre a Shopee no Bling?
+A) Apenas como fazer anúncios.
+B) Integração, envio/importação de produtos, faturamento e emissão de notas.
+C) Como criar promoções.
+D) Gerenciamento de chat com clientes. Resposta Correta: B) Integração, envio/importação de produtos, faturamento e emissão de notas.
+72. Shopee - Inscrição Estadual para MEI Pergunta: Por que é importante preencher a "Inscrição Estadual" nos dados da empresa no Bling?
+A) É opcional para quem é MEI.
+B) É obrigatório para a emissão de nota fiscal.
+C) Apenas para fins de cadastro interno.
+D) Para ativar o período de teste gratuito. Resposta Correta: B) É obrigatório para a emissão de nota fiscal.
+73. Shopee - Validade da Integração Pergunta: Quanto tempo dura a autorização da integração Bling-Shopee antes de precisar ser feita novamente?
+A) 30 dias.
+B) 90 dias.
+C) 180 dias.
+D) 365 dias (1 ano). Resposta Correta: D) 365 dias (1 ano).
+74. Shopee - Sincronização de Estoque Bling Pergunta: Qual o impacto de ativar a opção "Atualizar meu estoque conforme o Bling" na integração com a Shopee?
+A) O estoque será controlado pela Shopee.
+B) O estoque será sincronizado a partir do Bling para a Shopee.
+C) O estoque da Shopee será ignorado.
+D) Apenas o estoque inicial é enviado. Resposta Correta: B) O estoque será sincronizado a partir do Bling para a Shopee.
+75. Shopee - Estorno de Estoque Cancelado Pergunta: Para que o Bling estorne o estoque de um pedido cancelado na Shopee, o que precisa estar mapeado no gerenciador de transições?
+A) Apenas a situação "Em Aberto" para "Cancelado".
+B) A situação "Em Andamento" para "Cancelado" e "Em Aberto" para "Cancelado".
+C) Apenas a situação "Atendido" para "Cancelado".
+D) Não é possível estornar estoque de pedidos cancelados automaticamente. Resposta Correta: B) A situação "Em Andamento" para "Cancelado" e "Em Aberto" para "Cancelado".
+76. Shopee - Devolução de Mercadoria com NF Pergunta: Se uma nota de venda já foi emitida e o cliente cancela e devolve a mercadoria, o que é recomendado fazer para regularizar o estoque e a operação fiscal?
+A) Estornar o estoque na nota de venda.
+B) Fazer uma nota de devolução, que dará entrada no estoque.
+C) Apagar o pedido de venda.
+D) Fazer um ajuste manual de estoque. Resposta Correta: B) Fazer uma nota de devolução, que dará entrada no estoque.
+77. Shopee - NF-e Automática Pergunta: Qual a vantagem de ativar a "Geração automática da nota fiscal eletrônica" na integração com a Shopee?
+A) Apenas gera relatórios de vendas.
+B) O Bling emite a nota e lança o estoque automaticamente ao receber o pedido, transformando-o para "Atendido".
+C) Apenas envia e-mails de confirmação ao cliente.
+D) O Bling aguarda a confirmação manual antes de gerar a nota. Resposta Correta: B) O Bling emite a nota e lança o estoque automaticamente ao receber o pedido, transformando-o para "Atendido".
+78. Shopee - Logística da Shopee no Bling Pergunta: Para que serve a configuração de "Logística Shopee" no Bling?
+A) Para definir o preço do frete.
+B) Para o Bling imprimir etiquetas, organizar envios e mandar a nota fiscal para o painel da Shopee.
+C) Para monitorar o status de entrega.
+D) Para ativar o frete grátis. Resposta Correta: B) Para o Bling imprimir etiquetas, organizar envios e mandar a nota fiscal para o painel da Shopee.
+79. Shopee - Mapeamento de Meios de Pagamento Pergunta: No Bling, como se faz o mapeamento das formas de pagamento da Shopee para o financeiro do Bling?
+A) O Bling mapeia automaticamente todas as formas.
+B) Criando formas de pagamento no Bling e amarrando-as com os IDs das formas de pagamento da Shopee.
+C) Apenas informando as taxas do marketplace.
+D) O Bling não gerencia as formas de pagamento de marketplaces. Resposta Correta: B) Criando formas de pagamento no Bling e amarrando-as com os IDs das formas de pagamento da Shopee.
+80. Shopee - Cadastro de Produtos para Múltiplos Marketplaces Pergunta: Para quem vende em múltiplos marketplaces, qual a recomendação para o cadastro de produtos no Bling?
+A) Cadastrar o produto em cada marketplace separadamente.
+B) Cadastrar no Bling e exportar para os marketplaces.
+C) Importar de um marketplace para o Bling e depois exportar para outros.
+D) Todas as opções são igualmente eficientes. Resposta Correta: B) Cadastrar no Bling e exportar para os marketplaces.
+81. Shopee - Campo Customizado Obrigatório Pergunta: Qual campo customizado é obrigatório para a Shopee, conforme o treinamento?
+A) Cor.
+B) Tamanho.
+C) Marca.
+D) Peso. Resposta Correta: C) Marca.
+82. Shopee - SKU na Importação Pergunta: Qual a principal função do SKU em relação à importação de produtos da Shopee para o Bling?
+A) Define o preço do produto.
+B) Permite ao Bling localizar o produto e atualizá-lo em vez de criar um novo se o SKU for igual.
+C) É um código exclusivo da Shopee.
+D) Indica se o produto tem variações. Resposta Correta: B) Permite ao Bling localizar o produto e atualizá-lo em vez de criar um novo se o SKU for igual.
+83. Shopee - NCM Incompleto Pergunta: Se um produto importado da Shopee para o Bling não possui NCM preenchido, qual o impacto?
+A) Apenas um aviso no cadastro.
+B) A nota fiscal não será gerada automaticamente e o sistema travará.
+C) O estoque não será sincronizado.
+D) O produto não será exibido na loja. Resposta Correta: B) A nota fiscal não será gerada automaticamente e o sistema travará.
+84. Shopee - Pedido Cancelado na Importação Manual Pergunta: Se a Shopee cancelar um pedido antes mesmo de ser importado para o Bling, como ele aparecerá no Bling após importação manual?
+A) Como um pedido em aberto.
+B) Como um pedido cancelado, podendo ocultar os dados do cliente.
+C) Como um pedido atendido.
+D) O Bling não consegue importar pedidos cancelados. Resposta Correta: B) Como um pedido cancelado, podendo ocultar os dados do cliente.
+85. Shopee - Gerenciador de Transições e NF Automática Pergunta: O que acontece se o gerenciador de transições não estiver ativo, mas a nota fiscal automática estiver?
+A) O estoque ainda será lançado automaticamente.
+B) A nota fiscal não será gerada.
+C) O estoque não será lançado automaticamente, podendo causar inconsistências.
+D) Apenas pedidos pagos serão processados. Resposta Correta: C) O estoque não será lançado automaticamente, podendo causar inconsistências.
+86. Bling - Bling Academy Pergunta: O que é o Bling Academy?
+A) Uma plataforma para comprar produtos.
+B) Uma plataforma educacional gratuita com diversos treinamentos sobre o Bling.
+C) Um serviço de consultoria paga.
+D) Uma loja de aplicativos. Resposta Correta: B) Uma plataforma educacional gratuita com diversos treinamentos sobre o Bling.
+87. Bling - Alteração de Plano Pergunta: Se um usuário deseja alterar o plano do Bling, quando ele pode fazer isso sem perder o período de teste gratuito?
+A) Somente após o período de teste.
+B) A qualquer momento antes da ativação da conta, ou após a ativação mas antes do vencimento do período de trial.
+C) Apenas na data de vencimento do período de teste.
+D) Não é possível alterar o plano durante o período de teste. Resposta Correta: B) A qualquer momento antes da ativação da conta, ou após a ativação mas antes do vencimento do período de trial.
+88. Bling - Descrição Complementar Pergunta: Qual a função da "descrição complementar" de um produto?
+A) É o nome principal do produto.
+B) Uma descrição mais detalhada do produto, com requisitos de caracteres para marketplaces como Amazon.
+C) Apenas para uso interno.
+D) Indica o peso do produto. Resposta Correta: B) Uma descrição mais detalhada do produto, com requisitos de caracteres para marketplaces como Amazon.
+89. Bling - Unidades de Negócio Pergunta: O que são "unidades de negócio" no Bling?
+A) Diferentes tipos de produtos.
+B) Filiais ou lojas distintas que você pode querer organizar separadamente.
+C) Categorias de produtos.
+D) Formas de pagamento. Resposta Correta: B) Filiais ou lojas distintas que você pode querer organizar separadamente.
+90. Bling - Regras Fiscais para ST Pergunta: Se um cliente comprou um produto que tem ST (Substituição Tributária) e outro que não tem, é preciso fazer duas notas fiscais separadas?
+A) Sim, sempre.
+B) Não, criando regras específicas dentro da mesma natureza de operação, o sistema pode emitir uma única nota com o CFOP correto para cada item.
+C) Apenas se os produtos forem de segmentos diferentes.
+D) O Bling não suporta ST. Resposta Correta: B) Não, criando regras específicas dentro da mesma natureza de operation, o sistema pode emitir uma única nota com o CFOP correto para cada item.
+91. Bling - Centralização de Estoque Pergunta: Qual a principal vantagem de centralizar o controle de estoque no Bling para quem vende em múltiplos canais?
+A) Permite gerenciar o estoque em cada plataforma separadamente.
+B) Oferece uma precisão maior e padronização do estoque em todos os canais.
+C) Desabilita a sincronização automática.
+D) Aumenta o custo operacional. Resposta Correta: B) Oferece uma precisão maior e padronização do estoque em todos os canais.
+92. Bling - Campo Customizado Existente Pergunta: O que acontece se o Bling tenta criar um campo customizado que já existe?
+A) Ele cria o campo duplicado.
+B) Ele notifica que o campo já existe e não permite a criação.
+C) Ele automaticamente remapeia para o campo existente.
+D) Ele ignora a ação. Resposta Correta: B) Ele notifica que o campo já existe e não permite a criação.
+93. Bling - Otimização do ERP Pergunta: Qual é o objetivo de "otimizar" o uso do ERP, conforme mencionado no treinamento?
+A) Usar apenas as funcionalidades básicas.
+B) Aproveitar o máximo de recursos que o sistema fornece para trabalhar a seu favor.
+C) Reduzir o número de integrações.
+D) Apenas automatizar a emissão de notas. Resposta Correta: B) Aproveitar o máximo de recursos que o sistema fornece para trabalhar a seu favor.
+94. Bling - Peso Líquido e Peso Bruto Pergunta: Qual a importância de preencher o "peso líquido" e "peso bruto" de um produto?
+A) Apenas para fins fiscais.
+B) Para um cadastro completo e para o cálculo correto de frete e dimensões.
+C) São campos opcionais que não afetam a exportação.
+D) Apenas para controle interno do estoque. Resposta Correta: B) Para um cadastro completo e para o cálculo correto de frete e dimensões.
+95. Bling - Suporte para Início Pergunta: O que o Bling oferece para ajudar usuários que estão começando a configurar o sistema?
+A) Apenas treinamentos gravados.
+B) Um serviço de implantação guiada com um especialista e o Bling Academy.
+C) Somente suporte por chat.
+D) Um período de teste de apenas 7 dias. Resposta Correta: B) Um serviço de implantação guiada com um especialista e o Bling Academy.
+96. Bling - Benefício da Amazon Criteriosa Pergunta: Qual o principal benefício da Amazon ser "muito criteriosa" com os produtos e vendedores?
+A) Aumenta a complexidade da venda.
+B) A concorrência é menor e quem compra sabe que receberá um produto de qualidade.
+C) Não há benefício, apenas dificuldades.
+D) Diminui o volume de vendas. Resposta Correta: B) A concorrência é menor e quem compra sabe que receberá um produto de qualidade.
+97. Bling - Conteúdo do Bling Academy Pergunta: O que o Bling Academy oferece, além dos treinamentos?
+A) Somente artigos sobre o sistema.
+B) Diversos treinamentos desenvolvidos por influenciadores do Bling, 100% gratuitos.
+C) Acesso a ferramentas de marketing.
+D) Plataforma para venda de cursos. Resposta Correta: B) Diversos treinamentos desenvolvidos por influenciadores do Bling, 100% gratuitos.
+98. Bling - SKU na Importação Geral Pergunta: O que acontece quando um produto é importado para o Bling e já existe um com o mesmo SKU?
+A) O Bling cria uma cópia do produto.
+B) O Bling atualiza o produto existente com as novas informações.
+C) O Bling gera um erro de importação.
+D) O produto importado é ignorado. Resposta Correta: B) O Bling atualiza o produto existente com as novas informações.
+99. Bling - Recomendação para Cadastro de Produtos Pergunta: Qual a recomendação geral para o cadastro de produtos no Bling?
+A) Preencher apenas os campos obrigatórios.
+B) Focar nas fotos e na descrição, ignorando campos menos relevantes.
+C) Preencher o máximo de informações possível e padronizar SKUs para evitar problemas futuros.
+D) Deixar que o Marketplace complete os dados. Resposta Correta: C) Preencher o máximo de informações possível e padronizar SKUs para evitar problemas futuros.
+100. Bling - Canais de Atendimento Pergunta: Onde o Bling oferece suporte para dúvidas e assistência?
+A) Apenas via e-mail.
+B) Através dos canais de atendimento: telefone, chat e ticket.
+C) Somente em treinamentos ao vivo.
+D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais de atendimento: telefone, chat e ticket.
+        `;
+
+        // Game Elements
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        const gameContainer = document.getElementById('game-container');
+        const questionText = document.getElementById('question-text');
+        const answersContainer = document.getElementById('answers-container');
+        const prizeList = document.getElementById('prize-list');
+        const helpSkipBtn = document.getElementById('help-skip');
+        const helpEliminateBtn = document.getElementById('help-eliminate');
+        const stopButton = document.getElementById('stop-button');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalButton = document.getElementById('modal-button');
+        const timerDisplay = document.getElementById('timer');
+        const prizeValueDisplay = document.getElementById('prize-value-display');
+        const backToStartButton = document.getElementById('back-to-start-button');
+
+        // Game State
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let usedQuestionIndices = new Set();
+        let score = 0;
+        let helps = { skip: 1, eliminate: 1 };
+        let gameActive = true;
+        let synth; // Audio synth
+        let timerInterval;
+        let timeLeft = 45;
+
+        // Prize structure
+        const prizeLevels = [
+            { value: 1000, type: 'normal' },
+            { value: 2000, type: 'normal' },
+            { value: 3000, type: 'normal' },
+            { value: 4000, type: 'normal' },
+            { value: 5000, type: 'safe' }, // Patamar
+            { value: 10000, type: 'normal' },
+            { value: 20000, type: 'normal' },
+            { value: 30000, type: 'normal' },
+            { value: 40000, type: 'normal' },
+            { value: 50000, type: 'safe' }, // Patamar
+            { value: 100000, type: 'normal' },
+            { value: 200000, type: 'normal' },
+            { value: 300000, type: 'normal' },
+            { value: 500000, type: 'normal' },
+            { value: 1000000, type: 'final' } // Prêmio máximo
+        ];
+
+        function playSound(type) {
+            if (!synth) return; // Don't play if synth not ready
+            try {
+                if (type === 'correct') {
+                    // A short, pleasant, ascending melody for correct answers
+                    synth.triggerAttackRelease("C5", "8n", Tone.now());
+                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+                } else if (type === 'incorrect') {
+                    // A low, dissonant sound for incorrect answers
+                    synth.triggerAttackRelease("F#3", "4n", Tone.now());
+                }
+            } catch (error) {
+                console.error("Tone.js error:", error);
+            }
+        }
+
+
+        function parseQuestions(data) {
+            const questionBlocks = data.trim().split(/\n(?=\d+\.\s)/);
+            return questionBlocks.map(block => {
+                const lines = block.trim().split('\n');
+                const questionLine = lines.find(line => line.includes('Pergunta:'));
+                const question = questionLine ? questionLine.split('Pergunta:')[1].trim() : 'Pergunta não encontrada';
+                
+                // BUG FIX: Clean the answer text from the option line
+                const options = lines
+                    .filter(line => /^[A-D]\)/.test(line))
+                    .map(line => line.split('Resposta Correta:')[0].trim());
+
+                const answerLine = lines.find(line => line.includes('Resposta Correta:'));
+                const correctOptionLetter = answerLine ? answerLine.split('Resposta Correta:')[1].trim().charAt(0) : '';
+                const correctIndex = 'ABCD'.indexOf(correctOptionLetter);
+
+                return { question, options, correctIndex };
+            }).filter(q => q.options.length === 4 && q.correctIndex !== -1);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function initPrizeTable() {
+            prizeList.innerHTML = '';
+            // Display prizes in descending order
+            [...prizeLevels].reverse().forEach((level, index) => {
+                const li = document.createElement('li');
+                li.dataset.level = prizeLevels.length - 1 - index;
+                let classList = 'p-2 rounded-md transition-all duration-300';
+                if (level.type === 'safe') {
+                    classList += ' font-bold text-green-300';
+                }
+                if (level.type === 'final') {
+                    classList += ' font-black bling-gradient';
+                }
+                li.className = classList;
+                li.textContent = `R$ ${level.value.toLocaleString('pt-BR')}`;
+                prizeList.appendChild(li);
+            });
+        }
+
+        function updatePrizeTable() {
+            document.querySelectorAll('#prize-list li').forEach(li => {
+                li.classList.remove('bg-green-400', 'text-black', 'scale-110');
+            });
+
+            if (currentQuestionIndex < prizeLevels.length) {
+                const currentLevelElement = document.querySelector(`#prize-list li[data-level='${currentQuestionIndex}']`);
+                if (currentLevelElement) {
+                    currentLevelElement.classList.add('bg-green-400', 'text-black', 'scale-110');
+                }
+            }
+        }
+        
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft;
+            timerDisplay.classList.remove('low-time', 'critical-time');
+            if (timeLeft <= 10 && timeLeft > 5) {
+                timerDisplay.classList.add('low-time');
+            } else if (timeLeft <= 5) {
+                timerDisplay.classList.add('critical-time');
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timeUp();
+            }
+        }
+
+        function timeUp() {
+            if (!gameActive) return;
+            gameActive = false;
+            playSound('incorrect');
+            const finalScore = getSafePrize();
+            const title = "Tempo Esgotado!";
+            let text = '';
+            if (finalScore > 0) {
+                text = `Seu tempo para responder acabou. Você leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`;
+            } else {
+                text = "Seu tempo para responder acabou. Agradecemos a sua participação!";
+            }
+            showModal(title, text);
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= prizeLevels.length || usedQuestionIndices.size >= questions.length) {
+                endGame(true); // Player won
+                return;
+            }
+            
+            let questionPool = questions.filter((_, i) => !usedQuestionIndices.has(i));
+            if (questionPool.length === 0) {
+                 endGame(true);
+                 return;
+            }
+            
+            const randomQuestionIndexInPool = Math.floor(Math.random() * questionPool.length);
+            const originalQuestionIndex = questions.indexOf(questionPool[randomQuestionIndexInPool]);
+            
+            usedQuestionIndices.add(originalQuestionIndex);
+            const questionData = questions[originalQuestionIndex];
+
+            // Update prize value display
+            const currentPrize = prizeLevels[currentQuestionIndex].value;
+            prizeValueDisplay.textContent = `Valendo R$ ${currentPrize.toLocaleString('pt-BR')}`;
+
+            questionText.textContent = questionData.question;
+            answersContainer.innerHTML = '';
+            
+            questionData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'answer-option bg-green-800 bg-opacity-50 text-left p-4 rounded-lg shadow-md';
+                button.innerHTML = `<span class="font-bold mr-2">${option.substring(0,2)}</span> ${option.substring(3)}`;
+                button.dataset.index = index;
+                button.onclick = () => selectAnswer(index, questionData.correctIndex);
+                answersContainer.appendChild(button);
+            });
+            
+            gameActive = true;
+            updatePrizeTable();
+
+            // Reset and start timer
+            clearInterval(timerInterval);
+            timeLeft = 45; // CORRECTED TIME
+            timerDisplay.textContent = timeLeft;
+            timerDisplay.classList.remove('low-time', 'critical-time');
+            timerDisplay.classList.add('text-yellow-300');
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function selectAnswer(selectedIndex, correctIndex) {
+            if (!gameActive) return;
+            gameActive = false;
+            clearInterval(timerInterval); // Stop the timer
+
+            const buttons = answersContainer.querySelectorAll('button');
+            const selectedButton = buttons[selectedIndex];
+            const correctButton = buttons[correctIndex];
+
+            if (selectedIndex === correctIndex) {
+                playSound('correct');
+                selectedButton.classList.add('correct');
+                const mainEl = document.querySelector('main');
+
+                // Wait a bit, then fade out
+                setTimeout(() => {
+                    mainEl.classList.add('is-transitioning');
+                    
+                    // After fade out, load next question and fade in
+                    setTimeout(() => {
+                        currentQuestionIndex++;
+                        if (currentQuestionIndex < prizeLevels.length) {
+                            score = prizeLevels[currentQuestionIndex - 1].value;
+                        } else {
+                            score = prizeLevels[prizeLevels.length - 1].value;
+                        }
+                        loadQuestion();
+                        mainEl.classList.remove('is-transitioning');
+                    }, 400); // This must match the CSS transition duration
+
+                }, 1800);
+            } else {
+                playSound('incorrect');
+                selectedButton.classList.add('incorrect');
+                if(correctButton) correctButton.classList.add('correct');
+                setTimeout(() => {
+                    endGame(false);
+                }, 2000);
+            }
+        }
+        
+        function getSafePrize() {
+            let safePrize = 0;
+            for(let i = 0; i < currentQuestionIndex; i++) {
+                if(prizeLevels[i].type === 'safe' || prizeLevels[i].type === 'final') {
+                    safePrize = prizeLevels[i].value;
+                }
+            }
+            return safePrize;
+        }
+
+        function endGame(isWinner) {
+             gameActive = false;
+             clearInterval(timerInterval);
+             
+             let finalScore = 0;
+             let title = '';
+             let text = '';
+
+             if (isWinner) {
+                 finalScore = prizeLevels[prizeLevels.length - 1].value;
+                 title = "PARABÉNS!";
+                 text = `Você zerou o Show do Blingão e ganhou o prêmio máximo de R$ ${finalScore.toLocaleString('pt-BR')}!`;
+             } else {
+                 finalScore = getSafePrize();
+                 title = "Que pena, você errou!";
+                 if (finalScore > 0) {
+                    text = `Mas não se preocupe, você ainda leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`;
+                 } else {
+                    text = "Desta vez não foi, mas agradecemos a sua participação!";
+                 }
+             }
+             showModal(title, text);
+        }
+        
+        function stopGame() {
+            if (!gameActive) return;
+            gameActive = false;
+            clearInterval(timerInterval);
+            const currentPrize = currentQuestionIndex > 0 ? prizeLevels[currentQuestionIndex - 1].value : 0;
+            const title = "Você Parou!";
+            const text = `Parabéns pela sua jornada! Você ganhou R$ ${currentPrize.toLocaleString('pt-BR')}.`;
+            showModal(title, text);
+        }
+
+        function useHelp(type) {
+            if (!gameActive) return;
+
+            if (type === 'skip' && helps.skip > 0) {
+                helps.skip--;
+                helpSkipBtn.classList.add('disabled');
+                
+                const mainEl = document.querySelector('main');
+                mainEl.classList.add('is-transitioning');
+                
+                setTimeout(() => {
+                    loadQuestion();
+                    mainEl.classList.remove('is-transitioning');
+                }, 400);
+
+            } else if (type === 'eliminate' && helps.eliminate > 0) {
+                 helps.eliminate--;
+                 helpEliminateBtn.classList.add('disabled');
+
+                 const buttons = Array.from(answersContainer.querySelectorAll('button'));
+                 const currentQuestionData = questions.find(q => q.question === questionText.textContent);
+                 if (!currentQuestionData) return;
+                 
+                 const correctIndex = currentQuestionData.correctIndex;
+
+                 let incorrectButtons = buttons.filter(btn => parseInt(btn.dataset.index) !== correctIndex);
+                 shuffleArray(incorrectButtons);
+                 
+                 incorrectButtons.slice(0, 2).forEach(btn => {
+                     btn.style.visibility = 'hidden';
+                     btn.disabled = true;
+                 });
+            }
+        }
+        
+        function showModal(title, text) {
+            modalTitle.textContent = title;
+            modalText.innerHTML = text;
+            modal.classList.remove('hidden');
+            gameContainer.classList.add('hidden');
+        }
+
+        function backToStartScreen() {
+            modal.classList.add('hidden');
+            gameContainer.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            currentQuestionIndex = 0;
+            score = 0;
+            helps = { skip: 1, eliminate: 1 };
+            usedQuestionIndices.clear();
+            gameActive = true;
+            
+            helpSkipBtn.classList.remove('disabled');
+            helpEliminateBtn.classList.remove('disabled');
+            
+            modal.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+            
+            shuffleArray(questions);
+            loadQuestion();
+        }
+
+        // Event Listeners
+        startButton.addEventListener('click', async () => {
+            // Audio context must be started by a user gesture.
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            if (typeof Tone !== 'undefined') {
+                 synth = new Tone.Synth().toDestination();
+            }
+
+            startScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            resetGame();
+        });
+        
+        modalButton.addEventListener('click', resetGame);
+        backToStartButton.addEventListener('click', backToStartScreen);
+        helpSkipBtn.addEventListener('click', () => useHelp('skip'));
+        helpEliminateBtn.addEventListener('click', () => useHelp('eliminate'));
+        stopButton.addEventListener('click', stopGame);
+        
+        // Initial load
+        questions = parseQuestions(rawQuestionsData);
+        initPrizeTable();
+    }
+    </script>
+</body>
+</html>
+
