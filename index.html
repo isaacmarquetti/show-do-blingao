@@ -57,6 +57,15 @@
         #modal {
             transition: opacity 0.3s ease;
         }
+        #modal.winner-modal .modal-content {
+            background-image: linear-gradient(rgba(20, 8, 41, 0.8), rgba(20, 8, 41, 0.8)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');
+            background-size: cover;
+            border: 4px solid #ffd700;
+        }
+        #modal.winner-modal h2, #modal.winner-modal p {
+            color: white;
+            text-shadow: 2px 2px 4px black;
+        }
         #timer {
             transition: color 0.5s, transform 0.5s;
         }
@@ -74,7 +83,7 @@
 
     <div id="game-container" class="w-full max-w-6xl mx-auto hidden">
         <header class="text-center mb-6">
-            <h1 class="text-5xl font-black uppercase bling-gradient">Show do Blingão</h1>
+            <h1 class="text-5xl font-black uppercase bling-gradient leading-tight">Show do Blingão</h1>
             <p class="text-lg text-gray-300">Teste seus conhecimentos sobre o Bling!</p>
         </header>
 
@@ -128,7 +137,7 @@
     
     <!-- Modal -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
-        <div class="bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
+        <div class="modal-content bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
             <h2 id="modal-title" class="text-4xl font-black mb-4"></h2>
             <p id="modal-text" class="text-xl mb-6"></p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -140,7 +149,7 @@
     
     <!-- Loading/Start Screen -->
     <div id="start-screen" class="text-center">
-        <h1 class="text-6xl font-black uppercase bling-gradient mb-4 pb-2">Show do Blingão</h1>
+        <h1 class="text-6xl font-black uppercase bling-gradient mb-4 leading-tight">Show do Blingão</h1>
         <p class="text-xl text-gray-300 mb-6">Pronto para testar seus conhecimentos e ganhar prêmios?</p>
         
         <!-- Rules Section -->
@@ -158,7 +167,7 @@
 
 
     <script>
-    window.onload = () => {
+    document.addEventListener('DOMContentLoaded', () => {
         const rawQuestionsData = `
 1. Amazon - Atualizações de Categorias Pergunta: Qual foi a atualização recente na integração Bling-Amazon que impactou as categorias?
 A) Mudança do layout do painel da Amazon.
@@ -689,6 +698,7 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
         let synth; // Audio synth
         let timerInterval;
         let timeLeft = 45;
+        let audioReady = false;
 
         // Prize structure
         const prizeLevels = [
@@ -708,6 +718,20 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
             { value: 500000, type: 'normal' },
             { value: 1000000, type: 'final' } // Prêmio máximo
         ];
+
+        async function initAudio() {
+            if (audioReady || typeof Tone === 'undefined') {
+                return;
+            }
+            try {
+                await Tone.start();
+                synth = new Tone.Synth().toDestination();
+                audioReady = true;
+                console.log("Audio initialized successfully!");
+            } catch (e) {
+                console.error("Could not initialize audio.", e);
+            }
+        }
 
         function playSound(type) {
             if (!synth) return; // Don't play if synth not ready
@@ -917,16 +941,14 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
              gameActive = false;
              clearInterval(timerInterval);
              
-             let finalScore = 0;
              let title = '';
              let text = '';
 
              if (isWinner) {
-                 finalScore = prizeLevels[prizeLevels.length - 1].value;
                  title = "PARABÉNS!";
-                 text = `Você zerou o Show do Blingão e ganhou o prêmio máximo de R$ ${finalScore.toLocaleString('pt-BR')}!`;
+                 text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
              } else {
-                 finalScore = getSafePrize();
+                 const finalScore = getSafePrize();
                  title = "Que pena, você errou!";
                  if (finalScore > 0) {
                     text = `Mas não se preocupe, você ainda leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`;
@@ -934,7 +956,7 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
                     text = "Desta vez não foi, mas agradecemos a sua participação!";
                  }
              }
-             showModal(title, text);
+             showModal(title, text, isWinner);
         }
         
         function stopGame() {
@@ -943,7 +965,14 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
             clearInterval(timerInterval);
             const currentPrize = currentQuestionIndex > 0 ? prizeLevels[currentQuestionIndex - 1].value : 0;
             const title = "Você Parou!";
-            const text = `Parabéns pela sua jornada! Você ganhou R$ ${currentPrize.toLocaleString('pt-BR')}.`;
+            let text = '';
+
+            if (currentPrize > 0) {
+                text = `Parabéns pela sua jornada! Você ganhou R$ ${currentPrize.toLocaleString('pt-BR')}.`;
+            } else {
+                text = "Você decidiu não arriscar. Agradecemos a sua participação!";
+            }
+            
             showModal(title, text);
         }
 
@@ -982,9 +1011,19 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
             }
         }
         
-        function showModal(title, text) {
+        function showModal(title, text, isWinner = false) {
+            const modalContent = modal.querySelector('.modal-content');
             modalTitle.textContent = title;
             modalText.innerHTML = text;
+            
+            if (isWinner) {
+                modal.classList.add('winner-modal');
+                modalContent.classList.remove('bg-white', 'text-gray-800');
+            } else {
+                modal.classList.remove('winner-modal');
+                modalContent.classList.add('bg-white', 'text-gray-800');
+            }
+
             modal.classList.remove('hidden');
             gameContainer.classList.add('hidden');
         }
@@ -1015,15 +1054,8 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
         }
 
         // Event Listeners
-        startButton.addEventListener('click', async () => {
-            // Audio context must be started by a user gesture.
-            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
-                await Tone.start();
-            }
-            if (typeof Tone !== 'undefined') {
-                 synth = new Tone.Synth().toDestination();
-            }
-
+        startButton.addEventListener('click', () => {
+            initAudio();
             startScreen.classList.add('hidden');
             gameContainer.classList.remove('hidden');
             resetGame();
@@ -1038,7 +1070,7 @@ D) Apenas através da central de ajuda. Resposta Correta: B) Através dos canais
         // Initial load
         questions = parseQuestions(rawQuestionsData);
         initPrizeTable();
-    }
+    });
     </script>
 </body>
 </html>
