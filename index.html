@@ -54,7 +54,7 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        #modal {
+        #modal, #ranking-modal {
             transition: opacity 0.3s ease;
         }
         #modal.winner-modal .modal-content {
@@ -77,6 +77,9 @@
             color: #ef4444; /* red-500 */
             animation: pulse 1s infinite;
         }
+        .rank-1 { color: #ffd700; } /* Gold */
+        .rank-2 { color: #c0c0c0; } /* Silver */
+        .rank-3 { color: #cd7f32; } /* Bronze */
     </style>
 </head>
 <body class="text-white flex items-center justify-center min-h-screen p-4">
@@ -135,14 +138,40 @@
         </div>
     </div>
     
-    <!-- Modal -->
+    <!-- End Game Modal -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
         <div class="modal-content bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
             <h2 id="modal-title" class="text-4xl font-black mb-4"></h2>
             <p id="modal-text" class="text-xl mb-6"></p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            
+            <div id="save-score-container" class="hidden">
+                <input type="text" id="player-name" placeholder="Digite seu nome" class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-black">
+                <button id="save-score-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl text-lg w-full">Salvar Pontuação</button>
+            </div>
+
+            <div id="end-game-buttons" class="flex flex-col sm:flex-row gap-4 justify-center">
                 <button id="modal-button" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
                 <button id="back-to-start-button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ranking Modal -->
+    <div id="ranking-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-900 border-2 border-teal-500 p-8 rounded-2xl shadow-2xl text-center max-w-2xl w-full relative">
+            <button id="close-ranking-button" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
+            <h2 class="text-4xl font-black mb-6 bling-gradient">🏆 Top 5 Jogadores 🏆</h2>
+            
+            <!-- Ranking Header -->
+            <div class="grid grid-cols-12 gap-2 items-center text-lg px-2 pb-2 border-b border-gray-700 text-gray-400 font-bold mb-3">
+                <div class="col-span-1 text-center">#</div>
+                <div class="col-span-5">Jogador</div>
+                <div class="col-span-3">Prêmio</div>
+                <div class="col-span-3 text-right">Tempo</div>
+            </div>
+
+            <div id="ranking-list" class="space-y-3 text-left">
+                <!-- Ranking will be inserted here -->
             </div>
         </div>
     </div>
@@ -161,8 +190,15 @@
                 <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
             </ul>
         </div>
-
-        <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Começar!</button>
+        <div class="flex justify-center gap-4">
+            <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Começar!</button>
+            <button id="ranking-button" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
+        </div>
+        
+        <footer class="mt-12 text-gray-500 text-sm">
+            <p>v1.00</p>
+            <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
+        </footer>
     </div>
 
 
@@ -1243,6 +1279,15 @@ Gabarito: A
         const timerDisplay = document.getElementById('timer');
         const prizeValueDisplay = document.getElementById('prize-value-display');
         const backToStartButton = document.getElementById('back-to-start-button');
+        const rankingButton = document.getElementById('ranking-button');
+        const rankingModal = document.getElementById('ranking-modal');
+        const closeRankingButton = document.getElementById('close-ranking-button');
+        const rankingList = document.getElementById('ranking-list');
+        const saveScoreContainer = document.getElementById('save-score-container');
+        const saveScoreButton = document.getElementById('save-score-button');
+        const endGameButtons = document.getElementById('end-game-buttons');
+        const playerNameInput = document.getElementById('player-name');
+
 
         // Game State
         let questions = { easy: [], medium: [], hard: [] };
@@ -1255,6 +1300,9 @@ Gabarito: A
         let timerInterval;
         let timeLeft = 45;
         let audioReady = false;
+        let gameStartTime = 0;
+        let finalScoreForRanking = 0;
+        let totalTimeForRanking = 0;
 
         // Prize structure
         const prizeLevels = [
@@ -1531,19 +1579,24 @@ Gabarito: A
              
              let title = '';
              let text = '';
+             let finalPrize = 0;
 
              if (isWinner) {
+                 finalPrize = prizeLevels[prizeLevels.length - 1].value;
                  title = "PARABÉNS!";
                  text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
              } else {
-                 const finalScore = getSafePrize();
+                 finalPrize = getSafePrize();
                  title = "Que pena, você errou!";
-                 if (finalScore > 0) {
-                    text = `Mas não se preocupe, você ainda leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`;
+                 if (finalPrize > 0) {
+                    text = `Mas não se preocupe, você ainda leva para casa R$ ${finalPrize.toLocaleString('pt-BR')}.`;
                  } else {
                     text = "Desta vez não foi, mas agradecemos a sua participação!";
                  }
              }
+             
+             const totalTime = (Date.now() - gameStartTime) / 1000;
+             checkAndSaveScore(finalPrize, totalTime);
              showModal(title, text, isWinner);
         }
         
@@ -1561,6 +1614,8 @@ Gabarito: A
                 text = "Você decidiu não arriscar. Agradecemos a sua participação!";
             }
             
+            const totalTime = (Date.now() - gameStartTime) / 1000;
+            checkAndSaveScore(currentPrize, totalTime);
             showModal(title, text);
         }
 
@@ -1635,6 +1690,7 @@ Gabarito: A
             shuffleArray(questions.hard);
             
             gameActive = true;
+            gameStartTime = Date.now();
             
             helpSkipBtn.classList.remove('disabled');
             helpEliminateBtn.classList.remove('disabled');
@@ -1644,6 +1700,92 @@ Gabarito: A
             startScreen.classList.add('hidden');
             
             loadQuestion();
+        }
+
+        // --- RANKING FUNCTIONS ---
+        function getRanking() {
+            return JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
+        }
+
+        function saveRanking(ranking) {
+            localStorage.setItem('blingaoRanking', JSON.stringify(ranking));
+        }
+
+        function checkAndSaveScore(prize, time) {
+            // Only check for ranking if the prize is greater than 0
+            if (prize <= 0) {
+                saveScoreContainer.classList.add('hidden');
+                endGameButtons.classList.remove('hidden');
+                return;
+            }
+
+            const ranking = getRanking();
+            const worstScoreInRanking = ranking.length < 5 ? 0 : ranking[ranking.length - 1].prize;
+            const worstTimeInRanking = ranking.length < 5 ? Infinity : ranking[ranking.length - 1].time;
+
+            if (ranking.length < 5 || prize > worstScoreInRanking || (prize === worstScoreInRanking && time < worstTimeInRanking)) {
+                saveScoreContainer.classList.remove('hidden');
+                endGameButtons.classList.add('hidden');
+                finalScoreForRanking = prize;
+                totalTimeForRanking = time;
+                playerNameInput.value = localStorage.getItem('blingaoLastPlayer') || '';
+            } else {
+                saveScoreContainer.classList.add('hidden');
+                endGameButtons.classList.remove('hidden');
+            }
+        }
+        
+        function saveScore() {
+            const name = playerNameInput.value.trim();
+            if (!name) {
+                alert('Por favor, digite um nome.');
+                return;
+            }
+
+            localStorage.setItem('blingaoLastPlayer', name);
+
+            const ranking = getRanking();
+            const newScore = {
+                name: name,
+                prize: finalScoreForRanking,
+                time: totalTimeForRanking,
+                date: new Date().toLocaleDateString('pt-BR')
+            };
+
+            ranking.push(newScore);
+            ranking.sort((a, b) => b.prize - a.prize || a.time - b.time);
+            const newRanking = ranking.slice(0, 5);
+            saveRanking(newRanking);
+
+            saveScoreContainer.classList.add('hidden');
+            endGameButtons.classList.remove('hidden');
+            playerNameInput.value = '';
+        }
+
+        function displayRanking() {
+            const ranking = getRanking();
+            rankingList.innerHTML = '';
+
+            if (ranking.length === 0) {
+                rankingList.innerHTML = '<p class="text-gray-400 text-center">Nenhuma pontuação registrada ainda. Seja o primeiro!</p>';
+                return;
+            }
+
+            ranking.forEach((score, index) => {
+                const rankClass = `rank-${index + 1}`;
+                const timeFormatted = new Date(score.time * 1000).toISOString().substr(14, 5);
+
+                const scoreElement = document.createElement('div');
+                scoreElement.className = 'grid grid-cols-12 gap-2 items-center text-lg p-2 rounded-lg bg-gray-800';
+                scoreElement.innerHTML = `
+                    <div class="col-span-1 text-center font-black text-2xl ${rankClass}">${index + 1}</div>
+                    <div class="col-span-5 font-bold">${score.name}</div>
+                    <div class="col-span-3 text-green-400 font-bold">R$ ${score.prize.toLocaleString('pt-BR')}</div>
+                    <div class="col-span-3 text-right text-gray-400">${timeFormatted}</div>
+                `;
+                rankingList.appendChild(scoreElement);
+            });
+            rankingModal.classList.remove('hidden');
         }
 
         // Event Listeners
@@ -1659,6 +1801,9 @@ Gabarito: A
         helpSkipBtn.addEventListener('click', () => useHelp('skip'));
         helpEliminateBtn.addEventListener('click', () => useHelp('eliminate'));
         stopButton.addEventListener('click', stopGame);
+        rankingButton.addEventListener('click', displayRanking);
+        closeRankingButton.addEventListener('click', () => rankingModal.classList.add('hidden'));
+        saveScoreButton.addEventListener('click', saveScore);
         
         // Initial load
         parseQuestions(rawQuestionsData);
