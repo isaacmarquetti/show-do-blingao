@@ -7,6 +7,36 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+      import { getFirestore, collection, getDocs, addDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCW5SZ_WwhHXIlHE8BuY-UmW_eUSgoqqos",
+        authDomain: "show-do-blingao.firebaseapp.com",
+        projectId: "show-do-blingao",
+        storageBucket: "show-do-blingao.firebasestorage.app",
+        messagingSenderId: "255809112664",
+        appId: "1:255809112664:web:cb28e86029b5d70edd982d"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Make db and firebase functions accessible globally
+      window.db = db;
+      window.firebase = {
+          collection,
+          getDocs,
+          addDoc
+      };
+    </script>
+    
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -80,6 +110,18 @@
         .rank-1 { color: #ffd700; } /* Gold */
         .rank-2 { color: #c0c0c0; } /* Silver */
         .rank-3 { color: #cd7f32; } /* Bronze */
+        #start-button:disabled {
+            background-color: #4a5568;
+            cursor: not-allowed;
+        }
+        .subject-checkbox:checked + label {
+            background-color: #10B981;
+            border-color: #059669;
+        }
+        .ranking-tab.active {
+            background-color: #14B8A6;
+            color: white;
+        }
     </style>
 </head>
 <body class="text-white flex items-center justify-center min-h-screen p-4">
@@ -90,11 +132,12 @@
             <p class="text-lg text-gray-300">Teste seus conhecimentos sobre o Bling!</p>
         </header>
 
-        <div class="flex flex-col lg:flex-row gap-6">
+        <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
             <!-- Game Area -->
             <main class="w-full lg:w-3/4 bg-green-900 bg-opacity-30 p-6 rounded-2xl shadow-2xl transition-opacity duration-300">
                 <!-- Info Header: Prize Value and Timer -->
                 <div id="info-header" class="flex justify-between items-center mb-4 text-2xl font-bold px-2">
+                    <span id="question-id-display" class="text-gray-400 text-lg font-mono"></span>
                     <span id="prize-value-display" class="text-green-300"></span>
                     <div class="flex items-center gap-3">
                         <span class="text-yellow-300">Tempo:</span>
@@ -139,10 +182,11 @@
     </div>
     
     <!-- End Game Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="modal-content bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
             <h2 id="modal-title" class="text-4xl font-black mb-4"></h2>
             <p id="modal-text" class="text-xl mb-6"></p>
+            <p id="save-message" class="font-bold mb-4 hidden"></p>
             
             <div id="save-score-container" class="hidden">
                 <input type="text" id="player-name" placeholder="Digite seu nome" class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-black">
@@ -150,19 +194,22 @@
             </div>
 
             <div id="end-game-buttons" class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button id="modal-button" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
-                <button id="back-to-start-button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
+                <button id="modal-button" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
+                <button id="back-to-start-button" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
             </div>
         </div>
     </div>
 
     <!-- Ranking Modal -->
-    <div id="ranking-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 hidden">
-        <div class="bg-gray-900 border-2 border-teal-500 p-8 rounded-2xl shadow-2xl text-center max-w-2xl w-full relative">
+    <div id="ranking-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-900 border-2 border-teal-500 p-8 rounded-2xl shadow-2xl text-center max-w-3xl w-full relative">
             <button id="close-ranking-button" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
             <h2 class="text-4xl font-black mb-6 bling-gradient">🏆 Top 5 Jogadores 🏆</h2>
             
-            <!-- Ranking Header -->
+            <div id="ranking-tabs" class="flex flex-wrap justify-center gap-2 mb-4">
+                <!-- Ranking tabs will be inserted here -->
+            </div>
+
             <div class="grid grid-cols-12 gap-2 items-center text-lg px-2 pb-2 border-b border-gray-700 text-gray-400 font-bold mb-3">
                 <div class="col-span-1 text-center">#</div>
                 <div class="col-span-5">Jogador</div>
@@ -182,7 +229,7 @@
         <p class="text-xl text-gray-300 mb-6">Pronto para testar seus conhecimentos e ganhar prêmios?</p>
         
         <!-- Rules Section -->
-        <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-lg mx-auto mb-8 text-left text-gray-200">
+        <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
             <h2 class="text-2xl font-bold text-center mb-4 text-white">Regras do Jogo</h2>
             <ul class="list-disc list-inside space-y-2">
                 <li>Você tem <span class="font-bold text-yellow-300">45 segundos</span> para responder cada pergunta.</li>
@@ -190,1078 +237,33 @@
                 <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
             </ul>
         </div>
-        <div class="flex justify-center gap-4">
-            <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Começar!</button>
-            <button id="ranking-button" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
+
+        <!-- Subject Selection -->
+        <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
+            <h2 class="text-2xl font-bold text-center mb-4 text-white">Escolha os Assuntos</h2>
+            <div id="subject-selection" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <!-- Checkboxes will be inserted here -->
+            </div>
+             <p id="subject-warning" class="text-red-400 text-center mt-4 hidden">Selecione pelo menos um assunto para começar!</p>
+        </div>
+
+        <div class="flex flex-col items-center gap-4">
+            <div class="flex justify-center gap-4">
+                <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110" disabled>Começar!</button>
+                <button id="ranking-button" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
+            </div>
+             <p id="loading-status" class="text-yellow-400 mt-4">Carregando perguntas do banco de dados...</p>
         </div>
         
         <footer class="mt-12 text-gray-500 text-sm">
-            <p>v1.00</p>
+            <p>v2.0 - Seleção de Assuntos</p>
             <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
         </footer>
     </div>
 
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const rawQuestionsData = `
-**NÍVEL FÁCIL (50 Questões)**
-
-**1.** Qual tipo de Nota Fiscal o Bling possibilita emitir?
-a) Nota Fiscal Avulsa (NFA-e)
-b) Conhecimento de Transporte (CT-e)
-c) Nota Fiscal Eletrônica (NF-e)
-d) Cupom Fiscal Eletrônico (CF-e)
-Gabarito: C
-
-**2.** O que significa a mensagem "Falta de ativação" na conta de um cliente?
-a) O cliente precisa ativar o certificado digital.
-b) O período de testes expirou e o cliente não ativou a conta.
-c) O cliente não pagou a mensalidade em dia.
-d) A conta está aguardando homologação fiscal.
-Gabarito: B
-
-**3.** Qual o tempo de expiração do \`access_token\` na API v3 do Bling?
-a) 30 dias
-b) 1 minuto
-c) 6 horas
-d) Sem limite
-Gabarito: C
-
-**4.** Para que serve a opção "Pessoas de contato" dentro do cadastro de contatos no Bling?
-a) Apenas para informação geral.
-b) Para que sejam enviadas as notas fiscais emitidas.
-c) Trata-se do contato designado para resolução de problemas relacionados à empresa.
-d) É a informação do contato financeiro da empresa.
-Gabarito: C
-
-**5.** Qual a importância da categorização para o Bling em relação aos tickets de suporte?
-a) É utilizada pela supervisão e qualidade para planejar melhorias no sistema.
-b) É utilizada pelo time de produto para planejar melhorias no sistema.
-c) Não é importante para o Bling, somente para os clientes.
-d) É utilizado somente para filtrar tickets na tela de tickets.
-Gabarito: B
-
-**6.** Se o Bling tinha 2 unidades de um produto e um Balanço foi realizado com saldo 5, e no dia seguinte entraram 10 unidades por nota, qual será o saldo final?
-a) 2
-b) 12
-c) 5
-d) 15
-Gabarito: D
-
-**7.** Qual o principal objetivo do Alias Logístico?
-a) Identificar a forma de pagamento no canal de venda.
-b) Conectar a logística ao pedido de venda importado da loja virtual.
-c) Permitir a emissão de DANFE simplificado.
-d) Auxiliar na compatibilidade de produtos no Mercado Livre.
-Gabarito: B
-
-**8.** O que significa o ambiente "Alfa" no Bling?
-a) Ambiente síncrono, onde a versão está "crua" e não pode ser usada por clientes.
-b) Versão para testadores do sistema, onde as atualizações ocorrem primeiro.
-c) Versão finalizada do sistema, a mais estável.
-d) Ambiente de contingência para emissão de notas fiscais.
-Gabarito: A
-
-**9.** O que é um "Marketplace"?
-a) Um programa usado para comunicação com impressoras térmicas.
-b) Uma plataforma que reúne lojistas, oferecendo variedade de produtos e serviços.
-c) Um sistema de software que ajuda a administrar a empresa.
-d) Uma ferramenta de entrega da Amazon.
-Gabarito: B
-
-**10.** A série da nota fiscal muda entre plataformas (Mercado Livre, Magalu, Shopee) se você usar o faturador de cada uma?
-a) Não, a série é sempre a mesma para todas.
-b) Sim, cada uma terá sua própria série.
-c) A série só muda se o Bling for o emissor.
-d) A série é definida pela contabilidade e é única.
-Gabarito: B
-
-**11.** Qual o modelo de certificado digital Bling comercializa e qual sua validade?
-a) Modelo A3, validade de 3 anos.
-b) Modelo A1, validade de 3 anos.
-c) Modelo A3, validade de 1 ano.
-d) Modelo A1, validade de 1 ano.
-Gabarito: D
-
-**12.** No Bling, para que serve a opção de ativar a "Atualizar o estoque no canal de venda" (ou "Atualizar o estoque na loja virtual")?
-a) Para que sempre que houver atualizações de estoque na plataforma, o novo estoque venha automaticamente para o Bling.
-b) Para que o saldo atual de estoque do Bling seja enviado para a plataforma.
-c) Para que o Bling não aceite atualizações de estoque da plataforma.
-d) Para que sempre que houver atualizações de estoque do Bling, o novo estoque seja enviado para a plataforma.
-Gabarito: D
-
-**13.** O que é "escuta ativa" no atendimento de suporte?
-a) Falar mais que o cliente para demonstrar conhecimento.
-b) A prática de ouvir com atenção, compreender as necessidades do cliente e fazer perguntas para esclarecer detalhes.
-c) Interromper o cliente para agilizar o atendimento.
-d) Fazer suposições sobre o problema do cliente.
-Gabarito: B
-
-**14.** Qual é uma das competências essenciais para oferecer um atendimento de suporte de excelência?
-a) Julgar as situações complexas.
-b) Gerar conflitos durante o atendimento.
-c) Saber resolver problemas e ter as habilidades certas para criar uma experiência positiva para o cliente.
-d) Levar as coisas para o lado pessoal.
-Gabarito: C
-
-**15.** Qual é um dos dados obrigatórios no cadastro de produtos para a emissão de notas fiscais?
-a) Código SKU
-b) Preço de venda
-c) Unidade de medida
-d) Descrição do produto
-Gabarito: C
-
-**16.** Para que tipo de produtos é indicado cadastrar como variação no Bling?
-a) Kit, onde contém vários produtos no mesmo.
-b) Todos os tipos de produtos podem ser cadastrados como variação.
-c) Produtos que contenham variação de cor e tamanho.
-d) Produtos simples e com variações de cores e tamanhos.
-Gabarito: C
-
-**17.** Qual a principal finalidade da "Integração automática" para pedidos de venda?
-a) Importar pedidos de venda da loja para o Bling de forma automática.
-b) Enviar produtos cadastrados no Bling para a plataforma.
-c) Sincronizar qualquer informação inserida no Bling com a plataforma.
-d) Automatizar o processo de vendas.
-Gabarito: A
-
-**18.** O que é o "Código SKU" no Bling?
-a) O código de barras do produto.
-b) Um código alfanumérico responsável pelo vínculo multiloja dos produtos.
-c) A referência do produto, que deve ser única.
-d) O identificador da forma de pagamento no canal de venda.
-Gabarito: C
-
-**19.** Qual a principal responsabilidade da SEFAZ (Secretaria da Fazenda)?
-a) Gerenciar o estoque das empresas.
-b) Controlar a emissão das NF-e.
-c) Criar e gerenciar marketplaces.
-d) Fornecer certificados digitais.
-Gabarito: B
-
-**20.** No Frente de Caixa do Bling, para que serve a "Sangria"?
-a) Para injetar dinheiro no caixa.
-b) Para imprimir o comprovante da última operação.
-c) Para retirar dinheiro do caixa.
-d) Para gerar devoluções de vendas.
-Gabarito: C
-
-**21.** Qual o tempo de duração do \`refresh_token\` na API v3 do Bling?
-a) 6 horas
-b) 30 dias
-c) 1 minuto
-d) Sem limite
-Gabarito: B
-
-**22.** O que é uma "API" no contexto do Bling?
-a) Um sistema para gerenciar estoque.
-b) Uma porta para troca de dados entre sistemas com diferentes tecnologias.
-c) Um programa para emissão de notas fiscais.
-d) Uma plataforma de e-commerce.
-Gabarito: B
-
-**23.** Qual o tempo de expiração do \`authorization_code\` na API v3 do Bling?
-a) 6 horas
-b) 30 dias
-c) 1 minuto
-d) Sem limite
-Gabarito: C
-
-**24.** Qual o tempo de expiração do \`client_id\` na API v3 do Bling?
-a) 6 horas
-b) 30 dias
-c) 1 minuto
-d) Sem limite
-Gabarito: D
-
-**25.** Qual é o código utilizado para obter os tokens pela primeira vez na API v3 do Bling?
-a) API Key
-b) Refresh Token
-c) Client ID
-d) Authorization code
-Gabarito: D
-
-**26.** É possível corrigir o campo "Dados do Transportador" através da Carta de Correção?
-a) VERDADEIRO
-b) FALSO
-c) Apenas se não houver alteração de valores.
-d) Somente para transporte terrestre.
-Gabarito: A
-
-**27.** Quando na conta do cliente apresenta "Falta de ativação", significa que:
-a) O cliente não possui um certificado digital ativo.
-b) O período de testes expirou e o cliente não fez a ativação dela.
-c) A conta está inativa por falta de uso.
-d) O cliente precisa confirmar o e-mail de cadastro.
-Gabarito: B
-
-**28.** O que é o "GTIN/EAN"?
-a) Um código interno de referência do produto.
-b) Um código de barras para identificar produtos.
-c) Um identificador de categoria da Amazon.
-d) Um código para logística reversa.
-Gabarito: B
-
-**29.** O que é o ambiente "Beta" do Bling?
-a) A versão finalizada do sistema que o Bling está rodando.
-b) Um ambiente síncrono para identificar erros.
-c) A versão para testadores do sistema, com atualizações antecipadas.
-d) Um ambiente de produção de notas fiscais.
-Gabarito: C
-
-**30.** Qual o ambiente padrão quando uma conta Bling é criada?
-a) Produção
-b) Beta
-c) Homologação (testes)
-d) Alfa
-Gabarito: C
-
-**31.** No Bling, para que serve o "QZ Tray"?
-a) Para conciliar pagamentos bancários.
-b) Para criar etiquetas personalizadas.
-c) Para fazer comunicação com impressoras no formato ZPL e PDF.
-d) Para gerenciar o estoque.
-Gabarito: C
-
-**32.** Para que serve a função "Gerenciar Recebimentos" em Contas a Receber?
-a) Para acessar o menu "Caixa e Bancos".
-b) Para estornar a baixa total ou parcial de uma conta a receber.
-c) Para baixar contas a pagar.
-d) Para agrupar recebimentos.
-Gabarito: B
-
-**33.** O que é o "Catálogo" no Bling para integrações?
-a) Uma ferramenta para criar variações de produtos.
-b) Uma funcionalidade para gerenciar preços.
-c) Permite que anúncios de um produto sejam competitivos, garantindo destaque como melhor oferta.
-d) Um recurso para exportar produtos em lote.
-Gabarito: C
-
-**34.** O que é um "ERP"?
-a) Uma plataforma para gerenciar redes sociais.
-b) Um sistema de software que ajuda a administrar toda a empresa, dando suporte a finanças, RH, estoque, etc.
-c) Um dispositivo para conexão de múltiplos aparelhos.
-d) Um formato de arquivo para importação de dados.
-Gabarito: B
-
-**35.** Qual a principal finalidade da Logística Reversa?
-a) Agilizar o processo de entrega de produtos.
-b) Facilitar o processo de troca e devolução de venda online.
-c) Reduzir o custo do frete para o vendedor.
-d) Automatizar a seleção da logística.
-Gabarito: B
-
-**36.** O que é o ambiente "Quente" do Bling?
-a) Versão para testadores do sistema.
-b) Ambiente síncrono para identificação de erros.
-c) Versão finalizada e mais estável do sistema.
-d) Ambiente de contingência para emissão de notas.
-Gabarito: C
-
-**37.** Qual das seguintes ações NÃO é um procedimento a ser realizado para validar problemas de integração?
-a) Realizar o teste da URL informada na integração.
-b) Procurar a solução na Central de Ajuda.
-c) Clicar no botão 'Testar' dentro da integração.
-d) Explicar o passo a passo ao cliente e adicionar o link da Central de Ajuda.
-Gabarito: D
-
-**38.** O que significa o termo "Seller"?
-a) Comprador
-b) Fornecedor
-c) Vendedor
-d) Transportador
-Gabarito: C
-
-**39.** No Bling, é possível emitir Nota Fiscal de Consumidor eletrônica (NFC-e)?
-a) VERDADEIRO
-b) FALSO
-c) Apenas para o estado de São Paulo.
-d) Somente para empresas do Simples Nacional.
-Gabarito: A
-
-**40.** Qual dos tipos de pergunta ajuda o cliente a fornecer mais detalhes e explorar o contexto geral?
-a) Perguntas fechadas
-b) Perguntas reflexivas
-c) Perguntas abertas
-d) Perguntas diretas
-Gabarito: C
-
-**41.** Qual o objetivo da etapa "Receber" no atendimento de suporte do Bling?
-a) Resolver o problema do cliente imediatamente.
-b) Acolher o cliente com boa disposição e atenção.
-c) Fazer perguntas para entender a necessidade do cliente.
-d) Encerrar o atendimento com agradecimento.
-Gabarito: B
-
-**42.** No processo de comunicação eficaz, qual habilidade demonstra ao cliente que você está totalmente presente e interessado?
-a) Tom de voz empático
-b) Linguagem corporal
-c) Escuta ativa
-d) Assertividade
-Gabarito: C
-
-**43.** O que é uma "Remessa" no contexto logístico do Bling?
-a) O processo de devolução de um produto.
-b) O envio de dados da venda ou nota fiscal do Bling para a logística.
-c) A impressão de etiquetas de transporte.
-d) A conciliação de pagamentos.
-Gabarito: B
-
-**44.** Qual das seguintes opções o Bling NÃO permite emitir?
-a) Nota Fiscal Eletrônica (NF-e)
-b) Nota Fiscal de Consumidor eletrônica (NFC-e)
-c) Conhecimento de Transporte (CT-e)
-d) Nota Fiscal de Serviço eletrônica (NFS-e)
-Gabarito: C
-
-**45.** Em uma forma de pagamento, para onde é recomendado enviar um registro financeiro que ainda não está no banco do cliente (ex: Cartão de Débito)?
-a) Caixas e Bancos
-b) Contas a Receber ou Pagar
-c) Direto para o DRE
-d) Não é necessário enviar para nenhum local específico.
-Gabarito: B
-
-**46.** Qual o nome dado ao documento eletrônico que contém todas as informações referentes à operação, como dados do emitente e do destinatário, descrição dos produtos, valores e impostos?
-a) DANFE simplificado
-b) Conhecimento de Transporte Eletrônico (CT-e)
-c) XML de notas fiscais
-d) Documento Auxiliar da Nota Fiscal Eletrônica (DANFE)
-Gabarito: C
-
-**47.** O que é "Cubagem automática"?
-a) Um parâmetro para calcular as dimensões do produto automaticamente.
-b) Uma ferramenta para criar embalagens para os produtos.
-c) Um recurso para buscar automaticamente as embalagens disponíveis na logística.
-d) Um parâmetro que considera a embalagem ideal como a que tiver o menor volume cúbico e caiba todos os itens do pedido.
-Gabarito: D
-
-**48.** Onde o saldo de estoque do Bling é visualizado na tela de cadastro de produtos?
-a) Na aba "Fornecedores".
-b) Clicando na caixinha de quantidade.
-c) Somente após gerar um relatório.
-d) No campo "Preço de Venda".
-Gabarito: B
-
-**49.** Qual o significado de "Fulfillment" em vendas online?
-a) Quando o vendedor é responsável pelo envio da mercadoria.
-b) Quando o envio é realizado pela integração, e a plataforma é responsável pelo envio da mercadoria ao cliente.
-c) O processo de importação de pedidos de venda para o Bling.
-d) O controle de estoque em múltiplas lojas.
-Gabarito: B
-
-**50.** Qual a funcionalidade da "Sangria" no Frente de Caixa?
-a) Inserir valores no caixa.
-b) Retirar valores do caixa.
-c) Acompanhar o fluxo de caixa diário.
-d) Registrar vendas a prazo.
-Gabarito: B
-
-**NÍVEL MÉDIO (50 Questões)**
-
-**51.** Em relação à Inutilização de Numeração de NF-e, quais situações permitem a inutilização?
-a) Notas denegadas podem ser inutilizadas.
-b) Somente notas que estão com situação "pendente" e "rejeitadas" podem ser inutilizadas.
-c) O prazo de inutilização é de 24 horas após a emissão.
-d) Notas já autorizadas podem ser inutilizadas se houver erro grave.
-Gabarito: B
-
-**52.** Um cliente inadimplente pede para trocar de plano. Em que situação é possível alterar o plano no Bling?
-a) Só será possível alterar após o pagamento do boleto em aberto.
-b) Somente se a última cobrança foi semestral ou anual.
-c) Somente se não tem nenhuma nota emitida na conta do cliente.
-d) Somente se a última cobrança foi semestral/anual ou se o último pagamento registrado no extrato da conta for de uma data antiga.
-Gabarito: D
-
-**53.** Para que serve a funcionalidade "Cubagem Automática" no Bling?
-a) Criar embalagens para os produtos.
-b) Calcular as dimensões do produto automaticamente.
-c) Buscar automaticamente as embalagens disponíveis na logística.
-d) Selecionar automaticamente embalagens para os volumes.
-Gabarito: D
-
-**54.** No caso de um cliente que alega ter sido informado de 4 meses grátis após o período de teste de 30 dias, como o suporte deve proceder?
-a) Informar ao cliente que lamenta o ocorrido e encaminhar para o Comercial aplicar o desconto.
-b) Informar ao cliente que o período de testes é de 30 dias, mas ele pode ganhar mais 30 concluindo o desafio dos primeiros passos do sistema.
-c) Encaminhar o ticket para o Comercial analisar a situação e providenciar a solução.
-d) Informar ao cliente que lamenta a informação incorreta, mas o período de testes é de 30 dias apenas.
-Gabarito: C
-
-**55.** Ao importar pedidos de venda, o cliente relata que o sistema não está reconhecendo os produtos já cadastrados. Qual das opções NÃO é um procedimento a ser realizado?
-a) Verificar o parâmetro "Na importação através da API, buscar produtos por código ou descrição".
-b) Excluir os produtos do Bling e importar o pedido novamente.
-c) Solicitar ao cliente um pedido que possamos importar para testar.
-d) Realizar importação manual de pedidos como teste.
-Gabarito: B
-
-**56.** Em qual das opções é possível cadastrar o 'ID logístico' (alias)?
-a) Pedido de venda e nota fiscal.
-b) Cadastro de produtos e pedido de venda.
-c) Pedido de venda e Configurações de Logística.
-d) Configurações de Logística e Configurações de Integração.
-Gabarito: C
-
-**57.** Em relação à inutilização de numeração de NF-e, qual é a afirmação correta?
-a) Notas denegadas podem ser inutilizadas.
-b) O prazo de inutilização é de 24 horas.
-c) Somente notas que estão com situação "pendente" e "rejeitadas" podem ser inutilizadas.
-d) Notas já autorizadas podem ser inutilizadas.
-Gabarito: C
-
-**58.** Qual a principal função de um "Hub" no contexto de integrações?
-a) Automatizar processos financeiros.
-b) Servir como ponto de conexão central para diversos dispositivos/plataformas.
-c) Gerenciar a emissão de notas fiscais.
-d) Sincronizar estoque entre diferentes canais.
-Gabarito: B
-
-**59.** O que é o "Painel" de uma loja virtual para o "seller"?
-a) Um dashboard de vendas no Bling.
-b) O ambiente administrativo da loja virtual do seller, para gestão de pedidos e produtos.
-c) O relatório de vendas do Marketplace.
-d) O painel de controle do Bling.
-Gabarito: B
-
-**60.** No Bling, para exportar um produto com variações para o Mercado Livre, qual opção deve ser selecionada?
-a) Selecione o produto pai e as variações.
-b) Selecione somente as variações.
-c) Selecione somente o produto pai.
-d) Selecione somente as variações que deseja exportar.
-Gabarito: C
-
-**61.** Quais são os requisitos para realizar uma Conferência de Estoque utilizando a ferramenta do Bling?
-a) Possuir a Descrição ou a Unidade no cadastro do produto.
-b) Possuir o Código de barras ou a Unidade no cadastro do produto.
-c) Possuir o SKU ou a Unidade no cadastro do produto.
-d) Possuir o SKU ou o Código de barras no cadastro do produto.
-Gabarito: D
-
-**62.** Para que serve a configuração "Desconsiderar saldo deste depósito" em um depósito do Bling?
-a) Para que o depósito seja considerado como um depósito principal.
-b) Para que o saldo desse depósito não seja incluído no montante geral do estoque.
-c) Para que os produtos desse depósito sejam automaticamente transferidos para outro.
-d) Para que o sistema não permita o lançamento de estoque nesse depósito.
-Gabarito: B
-
-**63.** Qual a competência de atendimento que envolve ter o conhecimento necessário para realizar suas atividades, entender a função, o setor e as ferramentas do dia a dia?
-a) Ouvir
-b) Entender
-c) Saber
-d) Resolver
-Gabarito: C
-
-**64.** No atendimento de suporte, qual competência é essencial para compreender a real necessidade do cliente, fazendo perguntas e validando o que foi entendido?
-a) Respeitar
-b) Adaptar-se
-c) Entender
-d) Assertividade
-Gabarito: C
-
-**65.** Quais são os requisitos obrigatórios para utilizar a funcionalidade de Ordem de Produção no Bling?
-a) O formato do produto precisa ser "Com composição" e a produção "Terceiros", enquanto o estoque deve ser "Físico".
-b) O formato do produto precisa ser "Com composição" e a produção "Própria", enquanto o estoque deve ser "Físico".
-c) O formato do produto precisa ser "Simples" e a produção "Própria", enquanto o estoque deve ser "Virtual".
-d) O formato do produto precisa ser "Com composição" e a produção "Própria", enquanto o estoque deve ser "Virtual".
-Gabarito: B
-
-**66.** Para cadastrar produtos com \`COMPOSIÇÃO\` por \`PLANILHA\`, é necessário possuir o \`KIT\` e seus \`COMPONENTES\` previamente cadastrados no \`SISTEMA\`. Qual a ordem correta das palavras para completar a frase?
-a) COMPOSIÇÃO, PLANILHA, KIT, COMPONENTES, SISTEMA.
-b) PLANILHA, COMPOSIÇÃO, KIT, COMPONENTES, SISTEMA.
-c) KIT, PLANILHA, COMPOSIÇÃO, SISTEMA, COMPOSIÇÃO.
-d) SISTEMA, COMPOSIÇÃO, COMPONENTES, KIT, PLANILHA.
-Gabarito: A
-
-**67.** Qual o procedimento correto a ser realizado no registro do ticket quando forem analisados diversos assuntos em um mesmo atendimento?
-a) É indicado classificar pelo assunto que demandou mais tempo de atendimento.
-b) O indicado neste caso é classificar o atendimento em "outros".
-c) O indicado é encaminhar o ticket para L2 e deixar que o L2 classifique.
-d) Deverá ser classificado com o assunto inicial, independente do tempo que levou para solucionar.
-Gabarito: A
-
-**68.** Para que tipo de produto é ideal utilizar um Código SKU que se mantém igual em todos os canais de venda?
-a) Produtos que são vendidos apenas em lojas físicas.
-b) Produtos que nunca são atualizados.
-c) Produtos vendidos em múltiplos marketplaces para facilitar a localização e controle de estoque.
-d) Produtos que possuem apenas uma variação.
-Gabarito: C
-
-**69.** Qual a funcionalidade da opção "Enviar os dados da venda para o canal de venda" nas configurações de exportação de venda da integração Bling-Mercado Livre?
-a) Para que o cliente receba a nota fiscal impressa.
-b) Para que o Mercado Livre saiba que a nota fiscal foi emitida.
-c) Para que a sincronização de estoque seja desativada.
-d) Para que o bling receba os dados fiscais do Mercado Livre.
-Gabarito: B
-
-**70.** No módulo de Finanças, para que o sistema lance contas automaticamente ao emitir notas, qual parâmetro deve estar ativo?
-a) Lançar contas ao emitir ou cancelar uma NFC-e.
-b) Importar contas a receber/pagar.
-c) Lançar contas ao emitir ou cancelar nota.
-d) Enviar junto com a Danfe o boleto das contas lançadas.
-Gabarito: C
-
-**71.** Qual tipo de nota fiscal o Bling recomenda para vendas físicas, sem a obrigatoriedade de colocar CPF do cliente?
-a) Nota Fiscal Eletrônica (NF-e)
-b) Nota Fiscal de Serviço eletrônica (NFS-e)
-c) Nota Fiscal de Consumidor eletrônica (NFC-e)
-d) Nota Fiscal Avulsa (NFA-e)
-Gabarito: C
-
-**72.** O que acontece se a opção "Atualizar o estoque no canal de venda" estiver ativa na integração da loja virtual?
-a) O Bling só receberá atualizações de estoque da plataforma.
-b) Toda atualização de estoque no Bling será enviada para a plataforma.
-c) O estoque da plataforma será atualizado manualmente.
-d) O Bling não sincronizará estoque com a plataforma.
-Gabarito: B
-
-**73.** O que o Bling faz quando você importa produtos de uma loja virtual e eles têm o mesmo SKU de produtos já existentes no Bling?
-a) Cria um novo produto com o mesmo SKU, gerando duplicidade.
-b) Atualiza o cadastro do produto existente no Bling.
-c) Ignora a importação dos produtos com SKU duplicado.
-d) Solicita uma confirmação para cada SKU duplicado.
-Gabarito: B
-
-**74.** Qual a recomendação para o preenchimento da inscrição estadual para MEI que desejam emitir NF-e?
-a) Não é necessário para MEI.
-b) É criada automaticamente com o CNPJ em todos os estados.
-c) Verificar na Central de Ajuda os estados que permitem o credenciamento e preenchê-la.
-d) Solicitar à contabilidade para criar uma inscrição estadual provisória.
-Gabarito: C
-
-**75.** Qual o tipo de certificado digital do Bling que é um arquivo, tem validade de 1 ano e é instalado em nuvem?
-a) Modelo A3
-b) Modelo A1
-c) Modelo A2
-d) Modelo B1
-Gabarito: B
-
-**76.** Como o Bling se destaca ao oferecer uma plataforma de suporte?
-a) Fornecendo treinamentos apenas para clientes premium.
-b) Apenas resolvendo problemas técnicos complexos.
-c) Facilitando a resolução de problemas para seus clientes e fornecendo orientações sobre funcionalidades.
-d) Limitando as interações com os clientes para agilizar o suporte.
-Gabarito: C
-
-**77.** O que as "Perguntas fechadas" ajudam a obter no atendimento de suporte?
-a) Mais detalhes sobre o problema do cliente.
-b) Confirmações de informações específicas ou respostas diretas.
-c) Reflexões do cliente sobre a situação.
-d) O contexto geral do problema.
-Gabarito: B
-
-**78.** Qual o principal objetivo da etapa "Compreender" no atendimento de suporte?
-a) Resolver o problema rapidamente.
-b) Acolher o cliente.
-c) Fazer perguntas, validar o que o cliente diz e resumir para garantir o entendimento.
-d) Fornecer a solução sem interrupções.
-Gabarito: C
-
-**79.** O que se deve fazer ao "Ajudar" o cliente no atendimento de suporte?
-a) Apenas encaminhar o cliente para outra equipe.
-b) Tomar a iniciativa para solucionar o problema, explicando os passos e mantendo o cliente informado.
-c) Dizer ao cliente que a solução não é imediata e esperar.
-d) Priorizar apenas a resolução de problemas simples.
-Gabarito: B
-
-**80.** No gerenciamento de conflitos, uma das dicas para lidar com situações difíceis é "Não deixe a situação alterar seu estado emocional". Qual o motivo?
-a) Para que o cliente perceba sua calma e se acalme.
-b) Porque a raiva do cliente pode ser contagiosa.
-c) Alguém precisa manter a calma e focar na solução.
-d) Para evitar ser afetado pessoalmente pela crítica.
-Gabarito: C
-
-**81.** Onde se encontram as configurações para gerar automaticamente as notas fiscais no Bling para um Marketplace específico como a Shopee?
-a) No menu de "Vendas".
-b) Na "Central de Extensões", dentro das configurações da loja.
-c) No menu "Notas Fiscais".
-d) No cadastro do produto.
-Gabarito: B
-
-**82.** Para que serve o campo "Unidade" no cadastro de produtos ao emitir uma nota fiscal?
-a) É um campo opcional e não afeta a emissão.
-b) É obrigatório para emissão de nota fiscal.
-c) Serve apenas para controle interno de estoque.
-d) Indica se o produto é vendido por unidade ou peso.
-Gabarito: B
-
-**83.** Qual o efeito de ativar a opção "Atualizar estoque do Bling conforme loja virtual" nas configurações de produto de uma integração?
-a) O Bling só receberá atualizações de estoque da loja virtual.
-b) A loja virtual não receberá mais atualizações de estoque do Bling.
-c) Toda movimentação de estoque realizada no Bling será enviada para a loja virtual.
-d) O estoque será sincronizado apenas quando um pedido for importado.
-Gabarito: C
-
-**84.** No Bling, para que serve a funcionalidade de "Gerenciador de Transições"?
-a) Para controlar o fluxo de pedidos apenas manualmente.
-b) Para automatizar o lançamento de estoque e contas conforme a situação dos pedidos.
-c) Para gerar notas fiscais automaticamente, sem precisar de outras configurações.
-d) Para sincronizar o estoque com depósitos externos.
-Gabarito: B
-
-**85.** Como os atendentes devem proceder em relação ao acesso remoto?
-a) Não devem ser realizados acessos remotos com clientes, não importa o quanto os clientes solicitem.
-b) Devem ser realizados acessos remotos em todos os atendimentos a fim de facilitar e agilizar a resolução dos atendimentos.
-c) Acessos remotos devem ser realizados de forma moderada, e se o atendimento via ticket não estiver sendo efetivo, ou quando necessário acessar o painel do cliente.
-d) Acessos remotos devem ser utilizados somente quando o cliente solicitar.
-Gabarito: C
-
-**86.** Como as taxas de Cartão de Crédito podem ser cadastradas no Bling?
-a) Acessando o pedido de venda, selecionando a forma de pagamento e definindo a taxa.
-b) Em "Preferências > Todas as Configurações > Finanças > Gerenciar Formas de Pagamentos", clicando no cadastro da forma "Cartão de Crédito" para informar tipos de taxa e valores.
-c) No momento de baixar a Conta a Receber/Pagar, informando os Acréscimos.
-d) Apenas informando as alíquotas em "Gerenciar Formas de Pagamentos".
-Gabarito: B
-
-**87.** Um cliente tem um Pedido de Venda em que foi pago à vista uma entrada em dinheiro, e o restante parcelado em 3x no Boleto. Qual a alternativa correta para definir as condições no pedido?
-a) No campo Condição de Pagamento do pedido, informar "0 + 3x", gerar parcelas, customizar a Forma para cada parcela (Dinheiro e Boleto).
-b) Só é possível selecionar uma forma de pagamento por pedido.
-c) Informar "4x" no campo Condição de Pagamento do Pedido, gerar parcelas e salvar.
-d) Dividir o pedido em dois, um para dinheiro e outro para boleto.
-Gabarito: A
-
-**88.** Quais informações são consultadas para descobrir o motivo de alguns contratos não terem gerado cobrança no módulo de Serviços?
-a) Mês/Ano término contrato, Impressão do período de cobrança, Situação, Data base e Vencimento.
-b) Vencimento, Situação, Periodicidade, Natureza de operação e Mês/Ano término contrato.
-c) Data base, Vencimento, Periodicidade, Situação, Mês/Ano término contrato.
-d) Impressão do período de cobrança, Situação, Vencimento e Periodicidade.
-Gabarito: C
-
-**89.** Como configurar um reajuste de 15% em todos os contratos cadastrados no sistema?
-a) Informando "15%" no campo Índice de valor em Preferências > Serviços > Configurações de contratos e cobranças e deixando como "Indexação" no campo Tipo de manutenção dentro dos contratos.
-b) Informando "15" no campo Índice de valor em Preferências > Serviços > Configurações de contratos e cobranças e deixando como "Valor” no campo Tipo de manutenção dentro dos contratos.
-c) Entrando em cada contrato e alterando o campo Valor.
-d) Deixando como "Indexação" no campo Tipo de manutenção dentro dos contratos e informando "115" no campo Índice de valor em Preferências > Serviços > Configurações de contratos e cobranças.
-Gabarito: D
-
-**90.** O que deve ser feito ao encerrar um atendimento para garantir que o cliente sinta que teve um suporte completo?
-a) Apenas finalizar o chat ou ligação.
-b) Perguntar se o cliente tem mais alguma dúvida, agradecer e se despedir de forma cordial.
-c) Enviar um e-mail com a solução e o link da Central de Ajuda.
-d) Solicitar uma avaliação imediatamente sem perguntar sobre dúvidas.
-Gabarito: B
-
-**91.** Qual a importância de manter o tom de voz empático em atendimentos, mesmo via chat ou ticket?
-a) Para suavizar a situação e ajudar o cliente a se sentir mais compreendido.
-b) Para demonstrar que o atendente está com pressa.
-c) Para evitar que o cliente solicite uma solução imediata.
-d) Para que o cliente não sinta que o problema é sério.
-Gabarito: A
-
-**92.** Um cliente deseja transferir algumas mercadorias para outra unidade de negócio de sua empresa. Como ele pode informar o saldo correto de estoque para essa loja específica no módulo de Suprimentos?
-a) Acessando o menu Cadastros > Produtos, selecionando os produtos e clicando em "Transferir estoque dos produtos selecionados".
-b) Acessando o menu Suprimentos > Controle de Estoque, localizando o produto e clicando em "Transferência entre depósitos".
-c) Ambas as opções a e b estão corretas, pois são caminhos válidos para transferência de estoque.
-d) O Bling não possui funcionalidade de transferência entre unidades de negócio.
-Gabarito: C
-
-**93.** Para que serve o grupo de produtos no Bling?
-a) Somente para utilizar nos filtros dos relatórios.
-b) Para categorizar internamente os produtos no Bling.
-c) Agrupar os produtos que contêm a mesma regra de tributação.
-d) Categorizar e agrupar os produtos para utilização nos relatórios.
-Gabarito: C
-
-**94.** O que a configuração "Integração automática" tem como função principal no Bling?
-a) Servir para que os produtos cadastrados na plataforma venham para o Bling automaticamente.
-b) Servir para que os pedidos de venda da loja sejam importados para o Bling de forma automática.
-c) Servir para que qualquer informação inserida no Bling seja enviada para a plataforma e todas as informações inseridas na plataforma venham para o Bling.
-d) Servir para automatizar o processo de vendas.
-Gabarito: B
-
-**95.** Quais são as três etapas principais para a solução de problemas de forma eficiente no suporte ao cliente do Bling?
-a) Identificação, Resolução e Feedback.
-b) Compreensão, Análise e Execução.
-c) Escuta, Diagnóstico e Implementação.
-d) Receber, Compreender e Concluir.
-Gabarito: B
-
-**96.** No processo de comunicação, o que as "Perguntas reflexivas" ajudam a fazer?
-a) Obter mais informações sobre o problema.
-b) Confirmar decisões ou posicionamentos.
-c) Validar o entendimento do atendente e mostrar que ele está ouvindo atentamente.
-d) Direcionar o cliente para a solução correta.
-Gabarito: C
-
-**97.** O que as "Taxas de marketplaces" se referem?
-a) Aos impostos cobrados sobre as vendas.
-b) Aos custos de frete do Bling.
-c) Às taxas cobradas por cada marketplace, como comissões ou fretes.
-d) Aos custos de armazenamento no Bling.
-Gabarito: C
-
-**98.** No Bling, para que serve a opção "Desmembrar produtos de uma estrutura no checkout de vendas"?
-a) Para mostrar apenas o produto pai para conferência.
-b) Para desmembrar os produtos com composição ao ler um pedido no menu 'Checkout de pedidos'.
-c) Para desativar o controle de estoque de produtos com composição.
-d) Para automatizar o lançamento de estoque de componentes.
-Gabarito: B
-
-**99.** Qual a principal função do Alias de pagamento?
-a) Controlar as parcelas de vendas.
-b) Vincular as formas de pagamento do Bling com as do canal de venda.
-c) Identificar a forma de pagamento no canal de venda.
-d) Automatizar a liquidação dos recebíveis.
-Gabarito: C
-
-**100.** Quantos produtos podem ser considerados em uma única Ordem de Produção no Bling?
-a) Até 5 produtos.
-b) 1 produto apenas.
-c) 3 produtos.
-d) Quantos produtos desejar contanto que todos sejam com composição.
-Gabarito: B
-
-**NÍVEL DIFÍCIL (50 Questões)**
-
-**101.** Qual das seguintes afirmações sobre a correção de dados em notas fiscais via Carta de Correção (CC-e) é **incorreta**?
-a) É possível corrigir o campo "Dados do Transportador".
-b) É possível corrigir endereço do destinatário, alterando todo o endereço.
-c) É possível corrigir CFOP, desde que não mude a natureza dos impostos a recolher.
-d) É permitida a correção do Código da Situação Tributária, contanto que não haja alteração nos valores fiscais.
-Gabarito: B
-
-**102.** Em um cenário de cliente inadimplente pedindo para trocar de plano, o Bling permite a alteração apenas se a última cobrança foi semestral/anual ou se o último pagamento registrado no extrato da conta for de uma data antiga. O que isso implica para o atendente?
-a) O atendente deve sempre exigir o pagamento do boleto em aberto antes de qualquer alteração de plano.
-b) O atendente deve verificar o histórico financeiro da conta para identificar se a condição de alteração é atendida.
-c) O atendente deve informar que a alteração de plano é impossível para clientes inadimplentes.
-d) A condição de inadimplência impede a alteração de plano sob qualquer circunstância.
-Gabarito: B
-
-**103.** A atualização da API Bling da V2 para V3 impactou nas categorias da Amazon. Qual das afirmações descreve corretamente a ação necessária para categorias com o ponto de exclamação?
-a) As categorias com ponto de exclamação continuarão funcionando normalmente por tempo indeterminado.
-b) É necessário desvincular e revincular a categoria na Bling para que ela comunique da forma nova (API V3).
-c) O ponto de exclamação indica que a categoria será automaticamente atualizada pela Amazon.
-d) A única solução é recriar o produto e a categoria do zero.
-Gabarito: B
-
-**104.** Ao lidar com um cliente que está expressando frustração devido a um problema no sistema Bling, qual a melhor abordagem para aplicar empatia?
-a) Dizer "Eu não sei o que pode estar acontecendo, talvez você devesse tentar mais tarde."
-b) Reconhecer a frustração do cliente e assegurar que está comprometido com a solução.
-c) Ignorar a emoção do cliente e focar apenas na resolução técnica do problema.
-d) Pedir para o cliente se acalmar para que o atendimento possa prosseguir.
-Gabarito: B
-
-**105.** Qual das afirmações é **incorreta** sobre a utilização da base de conhecimento e da Central de Ajuda no atendimento de suporte do Bling?
-a) A base de conhecimento não é uma base de respostas prontas, mas sim de consultas.
-b) Os artigos da Central de Ajuda não devem ser encaminhados para clientes, pois são de uso interno do suporte.
-c) Qualquer tipo de fonte de conhecimento, como os artigos da Central de Ajuda, exige contextualização na resposta.
-d) A base de conhecimento é uma das principais fontes para ajudar a construir a resposta.
-Gabarito: B
-
-**106.** O cliente precisa alterar o valor do Frete em seu pedido de compra, onde já foram lançados contas e estoque, mas o campo encontra-se bloqueado. Como o cliente deverá proceder para realizar o ajuste no valor do frete?
-a) Não é possível editar o pedido de compra após lançar contas e estoque; ele deverá clonar o pedido e incluir o valor do frete.
-b) O cliente deverá desativar o parâmetro "Preencher frete automaticamente com base na cotação" para editar.
-c) O cliente deverá estornar estoque e contas, e só então alterar o valor do frete.
-d) O cliente deverá estornar somente o estoque no pedido de compra e alterar o valor do frete.
-Gabarito: C
-
-**107.** Em relação aos diferentes métodos de requisição na API v3 do Bling, qual das afirmações é **incorreta** sobre o uso de IDs e JSON no corpo da requisição?
-a) Os métodos PUT, PATCH e DELETE utilizam o ID como parâmetro na requisição.
-b) O método PUT requer o envio de toda a requisição completa no corpo.
-c) O método PATCH permite atualizar apenas campos específicos, sem a necessidade de enviar todos os campos.
-d) Todos os métodos (PUT, PATCH, DELETE) utilizam o mesmo JSON no corpo da requisição, incluindo o ID.
-Gabarito: D
-
-**108.** Qual das seguintes afirmações sobre o processo de homologação de um aplicativo da API v3 é **FALSA**?
-a) É necessário clicar em "revisar" e manter a página aberta para o processo ser concluído com sucesso.
-b) Não há exclusividade de o processo ser realizado apenas em uma conta de desenvolvedor.
-c) Em uma das requisições, é necessária a validação por parte do desenvolvimento do Bling.
-d) Não é necessário obrigatoriamente usar o Postman para realizar todas as requisições.
-Gabarito: C
-
-**109.** Um cliente possui vários canais de venda (Mercado Livre, Shopee, etc.) e está com problema de vendas simultâneas (vender um produto que não tem mais em estoque). Existe a possibilidade de definir um estoque mínimo por canal de venda (ex: mínimo 2 na Shopee e 1 no Mercado Livre)?
-a) Sim, o Bling permite definir estoque mínimo por canal de venda nas configurações de integração.
-b) Não, o Bling não permite definir estoque mínimo por canal de venda, mas a reserva de estoque pode ajudar a evitar vendas simultâneas.
-c) Sim, mas apenas para lojas físicas, não para marketplaces.
-d) Não, o estoque mínimo é sempre global para todos os produtos e canais.
-Gabarito: B
-
-**110.** Um cliente tem um produto cadastrado com variações e deseja alterar o formato dele para "simples" ou "composição". Essa alteração é possível?
-a) VERDADEIRO
-b) FALSO
-c) Sim, mas apenas para produtos que não possuem vendas registradas.
-d) Sim, mas apenas com o auxílio do suporte técnico.
-Gabarito: B
-
-**111.** Qual o procedimento correto para o L1 (Atendente de Nível 1) ao receber sugestões de melhoria de um cliente?
-a) Ignorar a sugestão e informar ao cliente que não aceitamos sugestões.
-b) Encaminhar a sugestão imediatamente para o desenvolvimento.
-c) Obter o máximo de informação sobre a sugestão, encaminhar mensagem padrão "Sugestão Melhoria" ao cliente, e detalhar ao L2 internamente.
-d) Não encaminhar nenhuma resposta ao cliente e repassar ao L2 o ticket.
-Gabarito: C
-
-**112.** Qual o procedimento que o L1 deve seguir ao encaminhar um ticket para análise de L2?
-a) Encaminhar o ticket diretamente para o L2 sem informar ao cliente.
-b) Informar ao cliente sobre o encaminhamento (opções “L2 / L3” ou “Financeiro/Comercial”), adicionar interação interna detalhando a situação ("Formulário de transferência (L2)") e alterar o nível para L2.
-c) Encaminhar o ticket para L2 sem encaminhar nenhuma interação interna, deixando que o L2 realize uma nova análise.
-d) Encaminhar o ticket para L2 sem realizar testes ou possuir exemplos, deixando que o L2 faça a análise inicial.
-Gabarito: B
-
-**113.** Qual o procedimento correto a ser realizado quando o cliente retorna em um atendimento exclusivamente de ticket com **outras dúvidas**?
-a) Os atendentes devem ignorar as novas solicitações e concluir o ticket.
-b) O atendente deve informar ao cliente que ele mesmo deverá registrar um novo ticket para as novas dúvidas.
-c) O atendente deverá alterar o responsável do ticket para "Nenhum" e deixar que outro atendente solucione a questão.
-d) Os atendentes devem demonstrar empatia e cordialidade, registrar um novo ticket, categorizá-lo corretamente e informar o cliente sobre o novo ticket; caso seja de seu segmento, assumir.
-Gabarito: D
-
-**114.** É correto afirmar que o estoque pode ser lançado a partir de um pedido de venda ou na nota fiscal, gerando uma saída de produtos do estoque?
-a) VERDADEIRO
-b) FALSO
-c) Apenas na nota fiscal.
-d) Apenas no pedido de venda.
-Gabarito: A
-
-**115.** Ao lançar uma nota de entrada e lançar o estoque dela, o valor do custo unitário do produto é preenchido automaticamente no sistema?
-a) VERDADEIRO
-b) FALSO
-c) Apenas se o fornecedor for cadastrado.
-d) Não, o custo unitário deve ser preenchido manualmente.
-Gabarito: A
-
-**116.** O cliente realiza a baixa de uma conta no Contas a Receber, mas ao pesquisar por ela no Caixa e Bancos, selecionando "Todas contas", não a localiza pelo nome do Contato e o Valor. O que pode ter ocorrido?
-a) A conta foi excluída de Caixa e Bancos.
-b) A conta foi lançada com um portador, mas no momento da baixa foi alterado para outro.
-c) Foi realizada uma baixa agrupada, onde várias contas foram selecionadas e baixadas com a opção "Recebimento agrupado" ativada.
-d) Nenhuma alternativa está correta.
-Gabarito: C
-
-**117.** Qual afirmação sobre o cadastro de serviços no Bling é **incorreta**?
-a) O campo "Unidade" não precisa ser preenchido.
-b) É recomendado preencher o SKU e o preço.
-c) É possível cadastrar prestação de serviços classificadas como comunicação, telecomunicação ou fornecimento de energia elétrica (Tipo Serviço 06 21 22).
-d) O cadastro deve ser feito em Cadastros > Produtos, definindo o Tipo como Serviço.
-Gabarito: B
-
-**118.** Qual afirmação sobre a emissão de Nota de Serviço (NFS-e) é **FALSA**?
-a) É necessário efetuar configurações de tributação no sistema.
-b) O número da NFS-e deve ser preenchido antes de transmitir a nota para a prefeitura.
-c) O MEI é dispensado da emissão de nota fiscal para pessoas físicas, a menos que o consumidor a solicite.
-d) O campo "Número NFS-e" é preenchido automaticamente pela prefeitura na emissão.
-Gabarito: B
-
-**119.** Quais as condições para ativar a "Geração Automática de Nota Fiscal" para um Marketplace como o Mercado Livre, e qual o seu benefício principal?
-a) Pode ser ativada a qualquer momento, e seu benefício é apenas emitir a nota fiscal.
-b) Recomenda-se ativar apenas quando todos os produtos e configurações fiscais estiverem corretos, pois automatiza a emissão da nota e o lançamento do estoque.
-c) É ativada por padrão e sempre sincroniza o estoque, mesmo com erros nos produtos.
-d) Não é recomendada, pois pode causar duplicidade de notas e erros de estoque.
-Gabarito: B
-
-**120.** Para uma empresa com faturamento no Bling que não bate com o valor dos XMLs enviados ao contador, como é possível corrigir essa divergência, considerando que o contador faz cálculos com impostos?
-a) Ajustar o valor do faturamento manualmente no Bling para que coincida com o do contador.
-b) Garantir que todas as guias de impostos (ex: Simples Nacional) sejam registradas e categorizadas no Bling como despesas sobre vendas, para que o relatório DRE mostre o valor com as apurações de impostos.
-c) Importar os XMLs do contador para o Bling para que o sistema recalcule o faturamento.
-d) Ignorar a diferença, pois o Bling mostra apenas valores brutos e o contador os líquidos.
-Gabarito: B
-
-**121.** Em casos de devoluções de produtos via Mercado Livre onde o sistema não atualiza o retorno de estoque automaticamente, qual o procedimento ideal para garantir o controle preciso?
-a) Apenas reajustar o estoque manualmente no Bling.
-b) Fazer uma nota de devolução e lançar o estoque por ela para que o produto retorne oficialmente ao inventário.
-c) Desativar a opção de sincronização de estoque para Marketplace nessas situações.
-d) Contatar o Mercado Livre para que eles forcem a atualização do estoque no Bling.
-Gabarito: B
-
-**122.** No Bling, para um produto cadastrado com variação, qual informação NÃO é herdada do produto pai, mesmo com o parâmetro "Utilizar informações do produto pai" ativado?
-a) Preço de venda
-b) Peso líquido
-c) Estoque máximo
-d) GTIN/EAN
-Gabarito: D
-
-**123.** Qual a regra de limite de requisições por IP na API v3 do Bling?
-a) 300 erros em 10 segundos, com duração de 10 minutos, e 600 requests em 10 segundos, com duração de 10 minutos.
-b) 200 erros em 30 segundos, com duração de 60 minutos, e 900 requests em 30 segundos, com duração de 360 minutos.
-c) 150 erros em 5 segundos, com duração de 15 minutos, e 6000 requests em 30 segundos, com duração de 300 minutos.
-d) 250 erros em 15 segundos, com duração de 30 minutos, e 600 requests em 10 segundos, com duração de 15 minutos.
-Gabarito: A
-
-**124.** Qual a causa do erro \`UNAUTHORIZED_ERROR\` na API v3 do Bling?
-a) A empresa vinculada ao token está inativa.
-b) O código de autorização já foi utilizado.
-c) O código de autorização expirou.
-d) O limite de aplicativos autorizados foi atingido.
-Gabarito: A
-
-**125.** Ao fazer o método PUT de um produto na API v3 do Bling, enviando apenas parte dos dados, o que ocorrerá com os campos não informados ou em branco?
-a) Os campos serão mantidos como estão.
-b) Será questionado o que o usuário deseja fazer, excluir ou manter.
-c) Os campos ausentes ou em branco vão ficar em branco no sistema.
-d) Serão utilizados dados do último produto cadastrado.
-Gabarito: C
-
-**126.** O POST é o método que permite cadastrar novos produtos no sistema via API v3. Ao preparar o JSON do produto, é **incorreto** afirmar que:
-a) Você pode remover quantos campos não obrigatórios desejar sem afetar o funcionamento do POST.
-b) Todos os campos devem seguir o tipo (string, boolean, integer…) conforme documentação.
-c) Ao fazer as alterações, é necessário garantir que a estrutura do JSON (chaves, colchetes, vírgulas) esteja corretamente posicionada.
-d) Os campos devem ser preenchidos por completo, não sendo possível remover campos do modelo disponibilizado na documentação.
-Gabarito: D
-
-**127.** Cliente informa que as contas não estão aparecendo no DRE. Por quais motivos podem não estar sendo apresentadas?
-a) A categoria selecionada na conta é de Receita e Despesa ou no cadastro da categoria selecionada na conta, está definido como "Não Exibir no DRE".
-b) A categoria selecionada na conta, está com a opção Despesa Financeira selecionada em Grupo de DRE.
-c) Todas as alternativas estão corretas.
-d) A conta não foi baixada.
-Gabarito: A
-
-**128.** É dia 15/09/2023, e o cliente está utilizando o Relatório de Fluxo de Caixa, selecionando o período de 01/09/2023 à 30/09/2023, porém as informações não estão sendo carregadas. Por qual motivo?
-a) Cliente não possui Contas a Receber ou Pagar em aberto no período informado.
-b) O Relatório de Fluxo de Caixa apresenta a projeção futura de acordo com Contas a receber/pagar, portanto, é necessário selecionar uma data a partir do dia atual que está visualizando o relatório.
-c) O Relatório de Fluxo de Caixa apresenta a projeção futura de acordo com Contas a receber/pagar, portanto, é necessário selecionar uma data a posterior ao dia atual que está visualizando o relatório.
-d) Cliente não possui contas baixadas.
-Gabarito: B
-
-**129.** No cenário de vendas físicas, para cadastrar preços diferentes para atacado e varejo, qual a abordagem correta no Bling?
-a) Cadastrar produtos separados para atacado e varejo.
-b) Criar uma loja "atacado" e outra "varejo" no Bling e definir preços específicos no carrinho multiloja para cada uma.
-c) Utilizar um único cadastro de produto e aplicar descontos manuais para vendas no atacado.
-d) Não é possível gerenciar preços de atacado e varejo simultaneamente no Bling.
-Gabarito: B
-
-**130.** Para controlar o estoque de um produto como "BOBINA DE CABO COM 1000M" que é vendido em metros ao importar o XML do fornecedor, qual o processo correto de conciliação?
-a) Clicar no item da nota, ir na aba Estoque, desmarcar "Vincular a produto existente", e preencher a quantidade desejada.
-b) Não é possível efetuar este processo no sistema atualmente.
-c) Clicar no símbolo de conciliação ao lado do item, identificar o produto cadastrado, preencher a quantidade total em metros, e conciliar.
-d) Clicar no item da nota, ir na aba Estoque, identificar o produto e preencher a quantidade em bobinas.
-Gabarito: C
-
-**131.** No Bling, para controlar o estoque de composições de mais de um nível (composição B é componente da composição A), qual a alternativa correta?
-a) Não é possível realizar o controle de estoque de composições de mais de um nível de nenhuma forma.
-b) É possível quando o KIT A possuir controle de estoque do tipo Físico e o lançamento de estoque for efetuado somente no KIT B, não nos componentes do KIT B.
-c) Para realizar este tipo de controle de estoque é necessário que a composição B tenha estoque tipo físico com lançamento no componente.
-d) Para realizar este tipo de controle é necessário que KIT B seja do tipo de estoque virtual.
-Gabarito: B
-
-**132.** A afirmação "No tipo de estoque virtual o saldo da composição é baseado no estoque dos componentes, pois o estoque do produto será o saldo do componente que tiver menor quantidade, não sendo possível alterá-lo." é:
-a) Verdadeira
-b) Falsa
-c) Verdadeira, mas o saldo pode ser alterado manualmente.
-d) Falsa, pois o estoque virtual não considera o saldo dos componentes.
-Gabarito: A
-
-**133.** Em relação aos aplicativos públicos e privados na API v3 do Bling, qual a afirmação está **incorreta**?
-a) Os aplicativos privados não possuem a obrigatoriedade de um logo.
-b) Aplicativos públicos serão usados para clientes que desejarem disponibilizar sua aplicação para múltiplas contas.
-c) A homologação é obrigatória em ambos os formatos.
-d) Ao criar o aplicativo é possível selecionar a visibilidade, mas não é possível alterá-la.
-Gabarito: C
-
-**134.** Qual o procedimento de comissionamento mais utilizado para um vendedor, onde a liberação total ocorre ao lançar contas?
-a) Liberação parcial vinculada ao pagamento das parcelas.
-b) Liberação integral após o pagamento da última parcela.
-c) Liberação integral no faturamento (lançamento contas).
-d) Liberação integral após o pagamento da primeira parcela.
-Gabarito: C
-
-**135.** Um cliente tem diversas categorias na Amazon com o "triângulo de exclamação". Ele notou que, ao selecionar nova vinculação, as subcategorias estavam iguais às anteriores. Qual a explicação para isso e a ação necessária?
-a) Isso é um erro do sistema Bling, e ele deve aguardar uma correção automática.
-b) A estrutura da categorização pode ser a mesma, mas é necessário refazer o vínculo para que a categoria comunique pela nova API (V3), desmarcando a anterior e vinculando novamente.
-c) O triângulo indica apenas uma sugestão de categoria, não sendo obrigatória a atualização.
-d) A Amazon exige uma nova estrutura de categoria a cada 55 dias, independente da API.
-Gabarito: B
-
-**136.** O que significa o campo "ID na loja" dentro do carrinho multiloja de um produto?
-a) É um código interno do Bling para controle de estoque.
-b) É o código de barras do produto.
-c) É o código alfanumérico responsável pelo vínculo multiloja dos produtos Bling com a loja virtual.
-d) É o número do pedido de venda na loja virtual.
-Gabarito: C
-
-**137.** Qual a principal vantagem de centralizar o controle de estoque de um produto no Bling quando se vende em múltiplos marketplaces?
-a) Poder usar SKUs diferentes para o mesmo produto em cada marketplace.
-b) Ter um controle mais preciso do estoque, pois qualquer movimentação no Bling é sincronizada com as lojas.
-c) Reduzir a necessidade de preencher informações fiscais dos produtos.
-d) Diminuir o tempo de importação de pedidos de venda.
-Gabarito: B
-
-**138.** Em um cenário de loja física, se o fechamento do caixa não é realizado diariamente, qual o principal risco e o procedimento ideal?
-a) O sistema pode travar, sendo necessário redefinir o caixa.
-b) O caixa acumulará dias e vendas, e o Bling não pedirá o troco na abertura, exigindo que o fechamento seja feito em um período determinado.
-c) As vendas não serão registradas corretamente, impactando os relatórios financeiros.
-d) O estoque não será atualizado, pois a baixa ocorre apenas no fechamento do caixa.
-Gabarito: B
-
-**139.** Qual a diferença de série para notas fiscais quando se emite pelo Bling versus por outro sistema (ex: faturador do Mercado Livre)?
-a) A série é sempre a mesma, independente do emissor, para manter a sequência numérica.
-b) Se trabalhar com um sistema só, usa-se uma série única; com mais de um sistema, usa-se séries distintas para cada emissor, para evitar duplicidade.
-c) O Bling e o Mercado Livre podem usar a mesma série, pois se comunicam para evitar duplicidade.
-d) A série é irrelevante, o importante é o número da nota.
-Gabarito: B
-
-**140.** Qual a funcionalidade da URL de redirecionamento em um aplicativo da API v3 do Bling?
-a) Mostrar ao cliente a homepage do sistema do cliente.
-b) Indicar ao suporte qual é a empresa que está fazendo a autenticação.
-c) Receber os códigos para autorizar o token.
-d) Enviar o convite ao cliente, para que ele possa aceitar o login.
-Gabarito: C
-
-**141.** Quais os dois códigos que a URL de convite precisa para iniciar a autenticação do aplicativo na API v3 do Bling?
-a) Client ID e State
-b) Token de acesso e State
-c) Client ID e Refresh Token
-d) Client Secret e Authorization Code
-Gabarito: A
-
-**142.** Em relação ao "ALIAS" da integração logística, qual das afirmações é **incorreta**?
-a) É usado para automatizar a seleção da logística e serviço nas vendas importadas.
-b) Cada serviço poderá ter apenas 1 alias relacionado.
-c) É o identificador do serviço de entrega no canal de vendas.
-d) Sem preencher o alias, será necessário selecionar manualmente a logística e o serviço nos pedidos de venda.
-Gabarito: B
-
-**143.** É possível configurar o sistema para que um vendedor finalize a venda de outro vendedor pelo Frente de Caixa?
-a) Sim, é possível.
-b) Não, o Bling não possui esta funcionalidade.
-c) Sim, se o usuário tiver permissão de administrador.
-d) Apenas se a venda for iniciada no mesmo dia.
-Gabarito: B
-
-**144.** É correto afirmar que a abertura do caixa no Frente de Caixa pode ser feita por qualquer usuário, independente de permissões?
-a) Verdadeira
-b) Falsa
-c) Somente se o caixa estiver fechado.
-d) Apenas se o usuário for o proprietário da conta.
-Gabarito: B
-
-**145.** Em um pedido de venda onde uma entrada em dinheiro e o restante parcelado em boleto foram utilizados como formas de pagamento, como definir as condições de pagamento no Bling?
-a) Apenas uma forma de pagamento por pedido é permitida.
-b) Informar "0 + 3x", gerar parcelas, customizar cada uma com a forma de pagamento correspondente.
-c) Registrar duas vendas separadas, uma para dinheiro e outra para boleto.
-d) O Bling não suporta múltiplas formas de pagamento em um único pedido.
-Gabarito: B
-
-**146.** Um boleto emitido pelo cliente através do Bling não está registrado. Qual a ação principal que está faltando ser realizada no Bling para que os boletos fiquem registrados?
-a) Efetuar a homologação com o banco.
-b) Configurar a opção de registrado nas configurações de boletos.
-c) Enviar diariamente o arquivo de remessa para o banco.
-d) Configurar a opção de registrado e enviar a remessa diariamente.
-Gabarito: C
-
-**147.** Se o cliente configurar a emissão de boletos do banco através do Bling, o valor do boleto será creditado em qual conta?
-a) Na conta do Bling e depois repassado à conta do cliente no banco.
-b) Na conta do Bling e o cliente precisa solicitar ao Bling o reembolso do valor.
-c) Na conta do cliente no banco.
-d) Pode escolher em qual conta deseja receber, se vai ser a conta do Bling ou do banco.
-Gabarito: C
-
-**148.** É possível que uma baixa efetuada dentro do menu de Contas a Receber seja listada no Controle de Caixa?
-a) Não, a baixa apenas irá para o Caixa e Bancos, pois o Controle de Caixa é destinado apenas para o Frente de Caixa.
-b) Sim, todas as baixas serão relacionadas no Controle de Caixa daquele dia.
-c) Sim, o sistema lhe permite escolher onde deseja lançar esta baixa.
-d) Não, o controle de caixa não possui relação com as baixas efetuadas.
-Gabarito: A
-
-**149.** É possível corrigir CFOP através da Carta de Correção?
-a) Sim, independente da natureza de impostos a recolher.
-b) Sim, desde que não mude a natureza dos impostos a recolher.
-c) Não, o CFOP não pode ser corrigido por Carta de Correção.
-d) Apenas se a nota fiscal ainda não foi autorizada.
-Gabarito: B
-
-**150.** As categorias no Bling, utilizadas para lojas virtuais e marketplaces, são diferentes das "tags" que servem para categorias internas do sistema. Esta afirmação é:
-a) Verdadeira
-b) Falsa
-c) Parcialmente verdadeira, pois tags também podem ser usadas para marketplaces.
-d) Depende da configuração do usuário.
-Gabarito: A
-`;
-
+    <script type="module">
+    document.addEventListener('DOMContentLoaded', async () => {
         // Game Elements
         const startScreen = document.getElementById('start-screen');
         const startButton = document.getElementById('start-button');
@@ -1287,10 +289,16 @@ Gabarito: A
         const saveScoreButton = document.getElementById('save-score-button');
         const endGameButtons = document.getElementById('end-game-buttons');
         const playerNameInput = document.getElementById('player-name');
-
+        const loadingStatus = document.getElementById('loading-status');
+        const saveMessage = document.getElementById('save-message');
+        const questionIdDisplay = document.getElementById('question-id-display');
+        const subjectSelectionContainer = document.getElementById('subject-selection');
+        const subjectWarning = document.getElementById('subject-warning');
+        const rankingTabsContainer = document.getElementById('ranking-tabs');
 
         // Game State
-        let questions = { easy: [], medium: [], hard: [] };
+        let allQuestions = { easy: [], medium: [], hard: [] };
+        let gameQuestions = { easy: [], medium: [], hard: [] };
         let usedQuestionIndices = { easy: new Set(), medium: new Set(), hard: new Set() };
         let currentQuestionIndex = 0;
         let score = 0;
@@ -1303,6 +311,8 @@ Gabarito: A
         let gameStartTime = 0;
         let finalScoreForRanking = 0;
         let totalTimeForRanking = 0;
+        let currentGameCategory = '';
+        const subjects = ["Módulo Outros", "Módulo Integrações", "Módulo Fiscal", "Atendimento"];
 
         // Prize structure
         const prizeLevels = [
@@ -1323,74 +333,156 @@ Gabarito: A
             { value: 1000000, type: 'final', difficulty: 'hard' }  // 15
         ];
 
-        async function initAudio() {
-            if (audioReady || typeof Tone === 'undefined') {
-                return;
+        // --- FIREBASE FUNCTIONS ---
+        async function fetchQuestionsFromFirestore() {
+            const { db, firebase } = window;
+            const { collection, getDocs } = firebase;
+            if (!db) {
+                console.error("Firestore DB not initialized!");
+                loadingStatus.textContent = "Erro ao conectar ao banco de dados.";
+                loadingStatus.classList.remove("hidden");
+                loadingStatus.classList.add("text-red-500");
+                return false;
             }
+            try {
+                const qCollection = collection(db, 'perguntas');
+                const querySnapshot = await getDocs(qCollection);
+                
+                querySnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const difficulty = data.Dificuldade.toLowerCase(); // fácil -> easy
+                    
+                    const transformedQuestion = {
+                        question: data.Pergunta,
+                        options: [
+                            data['Alternativa A'],
+                            data['Alternativa B'],
+                            data['Alternativa C'],
+                            data['Alternativa D']
+                        ],
+                        correctIndex: ['A', 'B', 'C', 'D'].indexOf(data['Resposta Correta']),
+                        ID: data.ID,
+                        subject: data.Assunto
+                    };
+
+                    if (difficulty === 'fácil' && transformedQuestion.correctIndex !== -1) {
+                        allQuestions.easy.push(transformedQuestion);
+                    } else if (difficulty === 'médio' && transformedQuestion.correctIndex !== -1) {
+                        allQuestions.medium.push(transformedQuestion);
+                    } else if (difficulty === 'difícil' && transformedQuestion.correctIndex !== -1) {
+                        allQuestions.hard.push(transformedQuestion);
+                    }
+                });
+                
+                if (allQuestions.easy.length === 0 && allQuestions.medium.length === 0 && allQuestions.hard.length === 0) {
+                     loadingStatus.textContent = "Nenhuma pergunta encontrada no banco de dados!";
+                     loadingStatus.classList.remove("hidden");
+                     loadingStatus.classList.add("text-red-500");
+                     return false;
+                }
+
+                loadingStatus.classList.add('hidden');
+                startButton.disabled = false;
+                return true;
+
+            } catch (error) {
+                console.error("Error fetching questions: ", error);
+                loadingStatus.textContent = "Erro ao carregar as perguntas.";
+                loadingStatus.classList.remove("hidden");
+                loadingStatus.classList.add("text-red-500");
+                return false;
+            }
+        }
+
+        // --- LOCAL STORAGE RANKING FUNCTIONS ---
+        function getRankingFromLocalStorage(category) {
+            const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
+            const filteredScores = allScores.filter(score => score.category === category);
+            
+            filteredScores.sort((a, b) => {
+                if (b.prize !== a.prize) {
+                    return b.prize - a.prize;
+                }
+                return a.time - b.time;
+            });
+
+            return filteredScores.slice(0, 5);
+        }
+
+        function saveRankingToLocalStorage(newScore) {
+            const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
+            allScores.push(newScore);
+            localStorage.setItem('blingaoRanking', JSON.stringify(allScores));
+            return true;
+        }
+
+        // --- UI SETUP ---
+        function setupSubjectSelection() {
+            const allSubjectsOption = `
+                <div class="sm:col-span-1">
+                    <input type="checkbox" id="select-all" class="hidden subject-checkbox">
+                    <label for="select-all" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center font-bold h-full flex items-center justify-center">Selecionar Todos</label>
+                </div>`;
+            
+            const subjectOptions = subjects.map(subject => `
+                <div>
+                    <input type="checkbox" id="${subject.replace(/\s+/g, '-')}" value="${subject}" class="hidden subject-checkbox subject-item">
+                    <label for="${subject.replace(/\s+/g, '-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
+                </div>
+            `);
+
+            const finalHTML = `
+                ${allSubjectsOption}
+                ${subjectOptions[0]}
+                ${subjectOptions[1]}
+                <div class="hidden sm:block"></div> <!-- Placeholder -->
+                ${subjectOptions[2]}
+                ${subjectOptions[3]}
+            `;
+
+            subjectSelectionContainer.innerHTML = finalHTML;
+
+            const selectAllCheckbox = document.getElementById('select-all');
+            const subjectCheckboxes = document.querySelectorAll('.subject-item');
+
+            selectAllCheckbox.addEventListener('change', () => {
+                subjectCheckboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            });
+
+            subjectCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    if (!checkbox.checked) {
+                        selectAllCheckbox.checked = false;
+                    } else if ([...subjectCheckboxes].every(c => c.checked)) {
+                        selectAllCheckbox.checked = true;
+                    }
+                });
+            });
+        }
+
+        // --- AUDIO FUNCTIONS ---
+        async function initAudio() {
+            if (audioReady || typeof Tone === 'undefined') { return; }
             try {
                 await Tone.start();
                 synth = new Tone.Synth().toDestination();
                 audioReady = true;
-                console.log("Audio initialized successfully!");
-            } catch (e) {
-                console.error("Could not initialize audio.", e);
-            }
+            } catch (e) { console.error("Could not initialize audio.", e); }
         }
 
         function playSound(type) {
-            if (!synth) return; // Don't play if synth not ready
-            try {
-                if (type === 'correct') {
-                    // A short, pleasant, ascending melody for correct answers
-                    synth.triggerAttackRelease("C5", "8n", Tone.now());
-                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
-                } else if (type === 'incorrect') {
-                    // A low, dissonant sound for incorrect answers
-                    synth.triggerAttackRelease("F#3", "4n", Tone.now());
-                }
-            } catch (error) {
-                console.error("Tone.js error:", error);
+            if (!synth) return;
+            if (type === 'correct') {
+                synth.triggerAttackRelease("C5", "8n", Tone.now());
+                synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+            } else if (type === 'incorrect') {
+                synth.triggerAttackRelease("F#3", "4n", Tone.now());
             }
         }
-
-
-        function parseQuestions(data) {
-            questions = { easy: [], medium: [], hard: [] };
-            
-            const easyData = data.split('**NÍVEL MÉDIO')[0];
-            const mediumData = data.split('**NÍVEL MÉDIO')[1].split('**NÍVEL DIFÍCIL')[0];
-            const hardData = data.split('**NÍVEL DIFÍCIL')[1];
-
-            const processBlock = (block) => {
-                if (!block) return [];
-                const processedQuestions = [];
-                const questionItems = block.trim().split(/\n\s*\n/);
-
-                for(const item of questionItems) {
-                    const lines = item.trim().split('\n').filter(line => line.trim() !== '');
-                    if (lines.length < 5 || !lines[0].startsWith('**')) continue;
-
-                    const question = lines[0].replace(/\*\*\d+\.\*\* /, '').trim();
-                    const options = lines.slice(1, 5).map(line => line.trim());
-                    const gabaritoLine = lines.find(line => line.toLowerCase().startsWith('gabarito:'));
-                    
-                    if (!gabaritoLine) continue;
-
-                    const correctOptionLetter = gabaritoLine.split(':')[1].trim();
-                    const correctIndex = 'abcd'.indexOf(correctOptionLetter.toLowerCase());
-
-                    if (question && options.length === 4 && correctIndex !== -1) {
-                        processedQuestions.push({ question, options, correctIndex });
-                    }
-                }
-                return processedQuestions;
-            };
-
-            questions.easy = processBlock(easyData);
-            questions.medium = processBlock(mediumData);
-            questions.hard = processBlock(hardData);
-        }
-
+        
+        // --- GAME LOGIC ---
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1400,17 +492,12 @@ Gabarito: A
         
         function initPrizeTable() {
             prizeList.innerHTML = '';
-            // Display prizes in descending order
             [...prizeLevels].reverse().forEach((level, index) => {
                 const li = document.createElement('li');
                 li.dataset.level = prizeLevels.length - 1 - index;
                 let classList = 'p-2 rounded-md transition-all duration-300';
-                if (level.type === 'safe') {
-                    classList += ' font-bold text-green-300';
-                }
-                if (level.type === 'final') {
-                    classList += ' font-black bling-gradient';
-                }
+                if (level.type === 'safe') classList += ' font-bold text-green-300';
+                if (level.type === 'final') classList += ' font-black bling-gradient';
                 li.className = classList;
                 li.textContent = `R$ ${level.value.toLocaleString('pt-BR')}`;
                 prizeList.appendChild(li);
@@ -1452,30 +539,28 @@ Gabarito: A
             playSound('incorrect');
             const finalScore = getSafePrize();
             const title = "Tempo Esgotado!";
-            let text = '';
-            if (finalScore > 0) {
-                text = `Seu tempo para responder acabou. Você leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`;
-            } else {
-                text = "Seu tempo para responder acabou. Agradecemos a sua participação!";
-            }
-            showModal(title, text);
+            let text = (finalScore > 0) 
+                ? `O seu tempo para responder acabou. Leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`
+                : "O seu tempo para responder acabou. Agradecemos a sua participação!";
+            
+            endGame(false, title, text, finalScore);
         }
 
         function getQuestionByDifficulty() {
             if (currentQuestionIndex >= prizeLevels.length) return null;
             
             const difficulty = prizeLevels[currentQuestionIndex].difficulty;
-            const questionPool = questions[difficulty].filter((_, i) => !usedQuestionIndices[difficulty].has(i));
+            const questionPool = gameQuestions[difficulty].filter((_, i) => !usedQuestionIndices[difficulty].has(i));
 
             if (questionPool.length === 0) {
-                return null; // No more questions of this difficulty
+                console.warn(`No more questions of difficulty: ${difficulty}`);
+                return null;
             }
 
             const randomIndex = Math.floor(Math.random() * questionPool.length);
             const chosenQuestion = questionPool[randomIndex];
             
-            // Find original index to mark as used
-            const originalIndex = questions[difficulty].indexOf(chosenQuestion);
+            const originalIndex = gameQuestions[difficulty].indexOf(chosenQuestion);
             usedQuestionIndices[difficulty].add(originalIndex);
 
             return chosenQuestion;
@@ -1483,49 +568,51 @@ Gabarito: A
 
         function loadQuestion() {
             if (currentQuestionIndex >= prizeLevels.length) {
-                endGame(true); // Player won
+                const finalPrize = prizeLevels[prizeLevels.length - 1].value;
+                const title = "PARABÉNS!";
+                const text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
+                endGame(true, title, text, finalPrize, true);
                 return;
             }
             
             const questionData = getQuestionByDifficulty();
             if (!questionData) {
-                // Handle case where questions run out for a specific difficulty
-                endGame(true); // Consider it a win if we run out of questions
+                const finalPrize = score;
+                const title = "Fim de Jogo!";
+                const text = `Você respondeu a todas as perguntas disponíveis! Parabéns! Ganhou R$ ${finalPrize.toLocaleString('pt-BR')}.`;
+                endGame(true, title, text, finalPrize);
                 return;
             }
 
-            // Update prize value display
             const currentPrize = prizeLevels[currentQuestionIndex].value;
             prizeValueDisplay.textContent = `Valendo R$ ${currentPrize.toLocaleString('pt-BR')}`;
-
+            questionIdDisplay.textContent = `ID: ${questionData.ID}`;
             questionText.textContent = questionData.question;
             answersContainer.innerHTML = '';
             
             questionData.options.forEach((option, index) => {
                 const button = document.createElement('button');
                 button.className = 'answer-option bg-green-800 bg-opacity-50 text-left p-4 rounded-lg shadow-md';
-                button.innerHTML = `<span class="font-bold mr-2">${option.substring(0,2)}</span> ${option.substring(3)}`;
+                button.innerHTML = `<span class="font-bold mr-2">${String.fromCharCode(97 + index)})</span> ${option}`;
                 button.dataset.index = index;
-                button.onclick = () => selectAnswer(button, questionData.correctIndex);
+                button.onclick = () => selectAnswer(button, questionData.correctIndex, questionData.ID);
                 answersContainer.appendChild(button);
             });
             
             gameActive = true;
             updatePrizeTable();
 
-            // Reset and start timer
             clearInterval(timerInterval);
             timeLeft = 45;
             timerDisplay.textContent = timeLeft;
-            timerDisplay.classList.remove('low-time', 'critical-time');
-            timerDisplay.classList.add('text-yellow-300');
+            timerDisplay.classList.remove('low-time', 'critical-time', 'text-yellow-300');
             timerInterval = setInterval(updateTimer, 1000);
         }
 
-        function selectAnswer(selectedButton, correctIndex) {
+        function selectAnswer(selectedButton, correctIndex, questionID) {
             if (!gameActive) return;
             gameActive = false;
-            clearInterval(timerInterval); // Stop the timer
+            clearInterval(timerInterval);
 
             const selectedIndex = parseInt(selectedButton.dataset.index);
             const buttons = answersContainer.querySelectorAll('button');
@@ -1536,29 +623,26 @@ Gabarito: A
                 selectedButton.classList.add('correct');
                 const mainEl = document.querySelector('main');
 
-                // Wait a bit, then fade out
                 setTimeout(() => {
                     mainEl.classList.add('is-transitioning');
-                    
-                    // After fade out, load next question and fade in
                     setTimeout(() => {
                         currentQuestionIndex++;
-                        if (currentQuestionIndex < prizeLevels.length) {
-                            score = prizeLevels[currentQuestionIndex - 1].value;
-                        } else {
-                            score = prizeLevels[prizeLevels.length - 1].value;
-                        }
+                        score = (currentQuestionIndex > 0) ? prizeLevels[currentQuestionIndex - 1].value : 0;
                         loadQuestion();
                         mainEl.classList.remove('is-transitioning');
-                    }, 400); // This must match the CSS transition duration
-
+                    }, 400);
                 }, 1800);
             } else {
                 playSound('incorrect');
                 selectedButton.classList.add('incorrect');
                 if(correctButton) correctButton.classList.add('correct');
                 setTimeout(() => {
-                    endGame(false);
+                    const finalPrize = getSafePrize();
+                    const title = "Que pena, você errou!";
+                    const text = (finalPrize > 0)
+                        ? `Mas não se preocupe, ainda leva para casa R$ ${finalPrize.toLocaleString('pt-BR')}.`
+                        : "Desta vez não foi, mas agradecemos a sua participação!";
+                    endGame(false, title, text, finalPrize);
                 }, 2000);
             }
         }
@@ -1566,57 +650,31 @@ Gabarito: A
         function getSafePrize() {
             let safePrize = 0;
             for(let i = 0; i < currentQuestionIndex; i++) {
-                if(prizeLevels[i].type === 'safe' || prizeLevels[i].type === 'final') {
+                if(prizeLevels[i].type === 'safe') {
                     safePrize = prizeLevels[i].value;
                 }
             }
             return safePrize;
         }
 
-        function endGame(isWinner) {
+        async function endGame(isWinner, title, text, finalPrize, isMillionaire = false) {
              gameActive = false;
              clearInterval(timerInterval);
              
-             let title = '';
-             let text = '';
-             let finalPrize = 0;
-
-             if (isWinner) {
-                 finalPrize = prizeLevels[prizeLevels.length - 1].value;
-                 title = "PARABÉNS!";
-                 text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
-             } else {
-                 finalPrize = getSafePrize();
-                 title = "Que pena, você errou!";
-                 if (finalPrize > 0) {
-                    text = `Mas não se preocupe, você ainda leva para casa R$ ${finalPrize.toLocaleString('pt-BR')}.`;
-                 } else {
-                    text = "Desta vez não foi, mas agradecemos a sua participação!";
-                 }
-             }
-             
              const totalTime = (Date.now() - gameStartTime) / 1000;
              checkAndSaveScore(finalPrize, totalTime);
-             showModal(title, text, isWinner);
+             showModal(title, text, isMillionaire);
         }
         
         function stopGame() {
             if (!gameActive) return;
-            gameActive = false;
-            clearInterval(timerInterval);
             const currentPrize = currentQuestionIndex > 0 ? prizeLevels[currentQuestionIndex - 1].value : 0;
             const title = "Você Parou!";
-            let text = '';
-
-            if (currentPrize > 0) {
-                text = `Parabéns pela sua jornada! Você ganhou R$ ${currentPrize.toLocaleString('pt-BR')}.`;
-            } else {
-                text = "Você decidiu não arriscar. Agradecemos a sua participação!";
-            }
+            const text = (currentPrize > 0)
+                ? `Parabéns pela sua jornada! Ganhou R$ ${currentPrize.toLocaleString('pt-BR')}.`
+                : "Você decidiu não arriscar. Agradecemos a sua participação!";
             
-            const totalTime = (Date.now() - gameStartTime) / 1000;
-            checkAndSaveScore(currentPrize, totalTime);
-            showModal(title, text);
+            endGame(false, title, text, currentPrize);
         }
 
         function useHelp(type) {
@@ -1625,10 +683,8 @@ Gabarito: A
             if (type === 'skip' && helps.skip > 0) {
                 helps.skip--;
                 helpSkipBtn.classList.add('disabled');
-                
                 const mainEl = document.querySelector('main');
                 mainEl.classList.add('is-transitioning');
-                
                 setTimeout(() => {
                     loadQuestion();
                     mainEl.classList.remove('is-transitioning');
@@ -1637,16 +693,12 @@ Gabarito: A
             } else if (type === 'eliminate' && helps.eliminate > 0) {
                  helps.eliminate--;
                  helpEliminateBtn.classList.add('disabled');
-
                  const buttons = Array.from(answersContainer.querySelectorAll('button'));
-                 const currentQuestionData = questions[prizeLevels[currentQuestionIndex].difficulty].find(q => q.question === questionText.textContent);
+                 const currentQuestionData = gameQuestions[prizeLevels[currentQuestionIndex].difficulty].find(q => q.question === questionText.textContent);
                  if (!currentQuestionData) return;
-                 
                  const correctIndex = currentQuestionData.correctIndex;
-
                  let incorrectButtons = buttons.filter(btn => parseInt(btn.dataset.index) !== correctIndex);
                  shuffleArray(incorrectButtons);
-                 
                  incorrectButtons.slice(0, 2).forEach(btn => {
                      btn.style.visibility = 'hidden';
                      btn.disabled = true;
@@ -1684,10 +736,7 @@ Gabarito: A
             helps = { skip: 1, eliminate: 1 };
             usedQuestionIndices = { easy: new Set(), medium: new Set(), hard: new Set() };
             
-            // Shuffle each difficulty level
-            shuffleArray(questions.easy);
-            shuffleArray(questions.medium);
-            shuffleArray(questions.hard);
+            Object.values(gameQuestions).forEach(shuffleArray);
             
             gameActive = true;
             gameStartTime = Date.now();
@@ -1699,31 +748,31 @@ Gabarito: A
             gameContainer.classList.remove('hidden');
             startScreen.classList.add('hidden');
             
+            saveScoreContainer.classList.add('hidden');
+            endGameButtons.classList.remove('hidden');
+            saveMessage.classList.add('hidden');
+            questionIdDisplay.textContent = '';
+
             loadQuestion();
         }
 
-        // --- RANKING FUNCTIONS ---
-        function getRanking() {
-            return JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
-        }
-
-        function saveRanking(ranking) {
-            localStorage.setItem('blingaoRanking', JSON.stringify(ranking));
-        }
-
+        // --- RANKING FUNCTIONS (LOCAL) ---
         function checkAndSaveScore(prize, time) {
-            // Only check for ranking if the prize is greater than 0
-            if (prize <= 0) {
+            if (prize <= 0 || !currentGameCategory) {
                 saveScoreContainer.classList.add('hidden');
                 endGameButtons.classList.remove('hidden');
+                if (prize > 0) {
+                    saveMessage.textContent = "Pontuação não elegível para este ranking (jogue com 1 ou todos os assuntos).";
+                    saveMessage.className = 'font-bold mb-4 text-yellow-600';
+                    saveMessage.classList.remove('hidden');
+                }
                 return;
             }
 
-            const ranking = getRanking();
-            const worstScoreInRanking = ranking.length < 5 ? 0 : ranking[ranking.length - 1].prize;
-            const worstTimeInRanking = ranking.length < 5 ? Infinity : ranking[ranking.length - 1].time;
-
-            if (ranking.length < 5 || prize > worstScoreInRanking || (prize === worstScoreInRanking && time < worstTimeInRanking)) {
+            const ranking = getRankingFromLocalStorage(currentGameCategory);
+            const worstScoreInRanking = ranking.length < 5 ? 0 : ranking[ranking.length - 1]?.prize || 0;
+            
+            if (ranking.length < 5 || prize > worstScoreInRanking) {
                 saveScoreContainer.classList.remove('hidden');
                 endGameButtons.classList.add('hidden');
                 finalScoreForRanking = prize;
@@ -1738,32 +787,43 @@ Gabarito: A
         function saveScore() {
             const name = playerNameInput.value.trim();
             if (!name) {
-                alert('Por favor, digite um nome.');
+                playerNameInput.focus();
                 return;
             }
 
             localStorage.setItem('blingaoLastPlayer', name);
 
-            const ranking = getRanking();
             const newScore = {
                 name: name,
                 prize: finalScoreForRanking,
                 time: totalTimeForRanking,
-                date: new Date().toLocaleDateString('pt-BR')
+                date: new Date().toISOString(),
+                category: currentGameCategory
             };
 
-            ranking.push(newScore);
-            ranking.sort((a, b) => b.prize - a.prize || a.time - b.time);
-            const newRanking = ranking.slice(0, 5);
-            saveRanking(newRanking);
+            const success = saveRankingToLocalStorage(newScore);
+            if(success) {
+                saveMessage.textContent = "Pontuação salva com sucesso!";
+                saveMessage.className = 'font-bold mb-4 text-green-600';
+            } else {
+                 saveMessage.textContent = "Erro ao salvar. Tente novamente.";
+                 saveMessage.className = 'font-bold mb-4 text-red-600';
+            }
+            saveMessage.classList.remove('hidden');
 
             saveScoreContainer.classList.add('hidden');
             endGameButtons.classList.remove('hidden');
             playerNameInput.value = '';
         }
 
-        function displayRanking() {
-            const ranking = getRanking();
+        function displayRanking(category = 'Geral') {
+            rankingModal.classList.remove('hidden');
+            rankingList.innerHTML = '<p class="text-gray-400 text-center">Carregando ranking...</p>';
+            
+            document.querySelectorAll('.ranking-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`.ranking-tab[data-category="${category}"]`).classList.add('active');
+
+            const ranking = getRankingFromLocalStorage(category);
             rankingList.innerHTML = '';
 
             if (ranking.length === 0) {
@@ -1785,29 +845,73 @@ Gabarito: A
                 `;
                 rankingList.appendChild(scoreElement);
             });
-            rankingModal.classList.remove('hidden');
+        }
+        
+        function setupRankingTabs() {
+            const categories = ['Geral', ...subjects];
+            rankingTabsContainer.innerHTML = categories.map(cat => {
+                let buttonText = cat;
+                if (cat !== 'Geral') {
+                    buttonText = cat.replace('Módulo ', 'Módulo<br>');
+                } else {
+                    buttonText = 'Todos os<br>Assuntos';
+                }
+                return `<button class="ranking-tab w-32 px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition text-center flex items-center justify-center h-16" data-category="${cat}">${buttonText}</button>`
+            }).join('');
+            
+            rankingTabsContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.ranking-tab');
+                if (button) {
+                    const category = button.dataset.category;
+                    displayRanking(category);
+                }
+            });
         }
 
-        // Event Listeners
+        // --- INITIALIZATION ---
         startButton.addEventListener('click', () => {
+            const selectedSubjects = [...document.querySelectorAll('.subject-item:checked')].map(cb => cb.value);
+            
+            if (selectedSubjects.length === 0) {
+                subjectWarning.classList.remove('hidden');
+                return;
+            }
+            subjectWarning.classList.add('hidden');
+
+            // Filter questions for the game
+            gameQuestions.easy = allQuestions.easy.filter(q => selectedSubjects.includes(q.subject));
+            gameQuestions.medium = allQuestions.medium.filter(q => selectedSubjects.includes(q.subject));
+            gameQuestions.hard = allQuestions.hard.filter(q => selectedSubjects.includes(q.subject));
+            
+            // Determine category for ranking
+            if (selectedSubjects.length === 1) {
+                currentGameCategory = selectedSubjects[0];
+            } else if (selectedSubjects.length === subjects.length) {
+                currentGameCategory = 'Geral';
+            } else {
+                currentGameCategory = ''; // Not eligible for specific rankings
+            }
+
             initAudio();
-            startScreen.classList.add('hidden');
-            gameContainer.classList.remove('hidden');
             resetGame();
+            
+            window.scrollTo(0, 0);
         });
         
-        modalButton.addEventListener('click', resetGame);
+        modalButton.addEventListener('click', backToStartScreen);
         backToStartButton.addEventListener('click', backToStartScreen);
         helpSkipBtn.addEventListener('click', () => useHelp('skip'));
         helpEliminateBtn.addEventListener('click', () => useHelp('eliminate'));
         stopButton.addEventListener('click', stopGame);
-        rankingButton.addEventListener('click', displayRanking);
+        rankingButton.addEventListener('click', () => displayRanking('Geral'));
         closeRankingButton.addEventListener('click', () => rankingModal.classList.add('hidden'));
         saveScoreButton.addEventListener('click', saveScore);
         
         // Initial load
-        parseQuestions(rawQuestionsData);
         initPrizeTable();
+        setupSubjectSelection();
+        setupRankingTabs();
+        await fetchQuestionsFromFirestore();
     });
     </script>
 </body>
