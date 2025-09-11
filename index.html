@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Show do Blingão</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+
+function tocarSonsVitoria() {
+  const torcida = document.getElementById("somTorcida");
+  const fogos = document.getElementById("somFogos");
+  if (torcida) { torcida.volume = 0.4; torcida.currentTime = 0; torcida.play().catch(()=>{}); }
+  if (fogos) { fogos.volume = 0.4; fogos.currentTime = 0; fogos.play().catch(()=>{}); }
+}
+</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     
@@ -38,6 +46,7 @@
     </script>
     
     <style>
+
         body {
             font-family: 'Montserrat', sans-serif;
             background: radial-gradient(circle, #0f3a21, #071e10);
@@ -103,10 +112,12 @@
             color: #f59e0b; /* amber-500 */
             transform: scale(1.1);
         }
-        #timer.critical-time {
-            color: #ef4444; /* red-500 */
-            animation: pulse 1s infinite;
-        }
+        
+#timer.critical-time {
+  color: #ef4444 !important; /* vermelho forte */
+  animation: pulse-strong 0.5s infinite;
+}
+
         .rank-1 { color: #ffd700; } /* Gold */
         .rank-2 { color: #c0c0c0; } /* Silver */
         .rank-3 { color: #cd7f32; } /* Bronze */
@@ -122,9 +133,265 @@
             background-color: #14B8A6;
             color: white;
         }
-    </style>
+    
+
+
+
+/* Correção para fontes visíveis após clique */
+#question-text,
+#question-id-display,
+#prize-value-display,
+.answer-option,
+#answers-container button,
+#prize-list li,
+#mensagemFinal,
+#telaJogo,
+#telaInicial,
+#telaFinal,
+.botao,
+button {
+  color: #ffffff !important;
+}
+
+
+/* Ajuste fino de cores */
+#timer {
+  color: #fbbf24 !important; /* amarelo (text-yellow-300) */
+}
+
+h2.font-bold.mb-3.text-xl {
+  color: #ffffff !important; /* branco para "Ajudas" e "Prêmios" */
+}
+
+#prize-value-display {
+  color: #34d399 !important; /* verde (text-green-300) */
+}
+
+
+/* Estilo para o texto "Valendo" (premiação acima da pergunta) */
+#prize-value-display {
+  background: linear-gradient(45deg, #a8ff78, #78ffd6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+}
+
+/* ID da pergunta com cinza discreto */
+#question-id-display {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+
+/* Forçar ID da pergunta em cinza discreto */
+#question-id-display {
+  color: #9ca3af !important; /* gray-400 */
+  font-weight: 600;
+}
+
+
+/* Forçar ID da pergunta em cinza definitivo */
+#info-header #question-id-display {
+  color: #9ca3af !important; /* gray-400 */
+  font-weight: 600 !important;
+}
+
+
+/* Animação suave ao reiniciar o jogo */
+main.is-transitioning {
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+
+/* Fade in/out real para troca de perguntas */
+main {
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+
+main.active {
+  opacity: 1;
+}
+
+
+/* Timer crítico com pulso mais forte */
+
+#timer.critical-time {
+  color: #ef4444 !important; /* vermelho forte */
+  animation: pulse-strong 0.5s infinite;
+}
+
+
+@keyframes pulse-strong {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+
+/* Corrigir cor do botão Ranking na tela inicial */
+#ranking-button {
+  color: #000000 !important; /* preto */
+}
+
+/* Corrigir nomes no ranking para branco */
+#ranking-list .col-span-5 {
+  color: #ffffff !important; /* branco para nomes */
+}
+
+/* Corrigir posições (1,2,3,4,5) para branco, exceto quando rank especial (ouro, prata, bronze) */
+
+
+/* Garantir que os prêmios mantenham verde */
+#ranking-list .text-green-400 {
+  color: #34d399 !important;
+}
+
+/* Garantir que o tempo mantenha cinza claro */
+#ranking-list .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+
+/* Garantir que 4º e 5º lugares do ranking fiquem brancos */
+#ranking-list .grid:nth-child(4) .col-span-1,
+#ranking-list .grid:nth-child(5) .col-span-1 {
+  color: #ffffff !important;
+}
+
+
+/* Apenas 4º e 5º números do ranking em branco */
+#ranking-list .grid:nth-child(4) .col-span-1,
+#ranking-list .grid:nth-child(5) .col-span-1 {
+  color: #ffffff !important;
+}
+
+
+/* Garantir que 1º, 2º, 3º mantenham ouro, prata e bronze */
+#ranking-list .col-span-1.rank-1 { color: #ffd700 !important; }
+#ranking-list .col-span-1.rank-2 { color: #c0c0c0 !important; }
+#ranking-list .col-span-1.rank-3 { color: #cd7f32 !important; }
+
+</style>
+
+<style>
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle, #0f3a21, #071e10);
+        }
+        .bling-gradient {
+            background: linear-gradient(45deg, #a8ff78, #78ffd6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .answer-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .answer-option:hover:not(:disabled) {
+            transform: scale(1.05);
+            background-color: #1e6b43;
+        }
+        .correct {
+            background-color: #28a745 !important;
+            color: white !important;
+            animation: pulse 0.5s 2;
+        }
+        .incorrect {
+            background-color: #dc3545 !important;
+            color: white !important;
+            animation: shake 0.5s;
+        }
+        .help-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #6c757d;
+        }
+        main.is-transitioning {
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        #modal, #ranking-modal {
+            transition: opacity 0.3s ease;
+        }
+        #modal.winner-modal .modal-content {
+            background-image: linear-gradient(rgba(20, 8, 41, 0.8), rgba(20, 8, 41, 0.8)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');
+            background-size: cover;
+            border: 4px solid #ffd700;
+        }
+        #modal.winner-modal h2, #modal.winner-modal p {
+            color: white;
+            text-shadow: 2px 2px 4px black;
+        }
+        #timer {
+            transition: color 0.5s, transform 0.5s;
+        }
+        #timer.low-time {
+            color: #f59e0b; /* amber-500 */
+            transform: scale(1.1);
+        }
+        
+#timer.critical-time {
+  color: #ef4444 !important; /* vermelho forte */
+  animation: pulse-strong 0.5s infinite;
+}
+
+        .rank-1 { color: #ffd700; } /* Gold */
+        .rank-2 { color: #c0c0c0; } /* Silver */
+        .rank-3 { color: #cd7f32; } /* Bronze */
+        #start-button:disabled {
+            background-color: #4a5568;
+            cursor: not-allowed;
+        }
+        .subject-checkbox:checked + label {
+            background-color: #10B981;
+            border-color: #059669;
+        }
+        .ranking-tab.active {
+            background-color: #14B8A6;
+            color: white;
+        }
+    
+
+
+
+/* Correção para fontes visíveis após clique */
+#question-text,
+#question-id-display,
+#prize-value-display,
+.answer-option,
+#answers-container button,
+#prize-list li,
+#mensagemFinal,
+#telaJogo,
+#telaInicial,
+#telaFinal,
+.botao,
+button {
+  color: #ffffff !important;
+}
+
+</style>
+
 </head>
-<body class="text-white flex items-center justify-center min-h-screen p-4">
+\1
+    <!-- Áudios controlados pelo AudioController -->
+    <audio id="somAcerto" src="acerto.mp3"></audio>
+    <audio id="somErro" src="erro.mp3"></audio>
+    <audio id="somFundo" src="fundo.mp3"></audio>
+    <audio id="somBeep" src="beep.mp3"></audio>
+    
 
     <div id="game-container" class="w-full max-w-6xl mx-auto hidden">
         <header class="text-center mb-6">
@@ -256,14 +523,47 @@
         </div>
         
         <footer class="mt-12 text-gray-500 text-sm">
-            <p>v2.0 - Seleção de Assuntos</p>
+            <p>v2.1 - Sons e Update Admin - Seleção de Assuntos</p>
             <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
         </footer>
     </div>
 
 
     <script type="module">
-    document.addEventListener('DOMContentLoaded', async () => {
+    
+        // ===== AudioController (isolates audio logic, no globals conflicts) =====
+        class AudioController {
+            get acerto() { return document.getElementById("somAcerto"); }
+            get erro() { return document.getElementById("somErro"); }
+            get fundo() { return document.getElementById("somFundo"); }
+
+            playCorrect() {
+                const a = this.acerto;
+                if (a) { try { a.volume = 0.1; a.currentTime = 0; a.play().catch(()=>{}); } catch(e){} }
+            }
+            playIncorrect() {
+                const e = this.erro;
+                if (e) { try { e.volume = 0.1; e.currentTime = 0; e.play().catch(()=>{}); } catch(err){} }
+            }
+            startBackground() {
+                const f = this.fundo;
+                if (f) {
+                    f.pause();
+                    f.currentTime = 0;
+                    f.volume = 0.05;
+                    f.play().then(()=>{}).catch(err => {
+                        console.log("Autoplay bloqueado (clique exigido)", err);
+                    });
+                }
+            }
+            stopBackground() {
+                const f = this.fundo;
+                if (f) { f.pause(); f.currentTime = 0; }
+            }
+        }
+        window.audioCtl = new AudioController();
+
+document.addEventListener('DOMContentLoaded', async () => {
         // Game Elements
         const startScreen = document.getElementById('start-screen');
         const startButton = document.getElementById('start-button');
@@ -527,6 +827,11 @@
                 timerDisplay.classList.add('critical-time');
             }
 
+            if (timeLeft <= 5 && timeLeft > 0) {
+                const beep = document.getElementById('somBeep');
+                if (beep) { try { beep.currentTime = 0; beep.play().catch(()=>{}); } catch(e){} }
+            }
+
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 timeUp();
@@ -534,9 +839,11 @@
         }
 
         function timeUp() {
-            if (!gameActive) return;
+            
+            window.audioCtl.stopBackground();
+if (!gameActive) return;
             gameActive = false;
-            playSound('incorrect');
+            window.audioCtl.playIncorrect();
             const finalScore = getSafePrize();
             const title = "Tempo Esgotado!";
             let text = (finalScore > 0) 
@@ -567,7 +874,9 @@
         }
 
         function loadQuestion() {
-            if (currentQuestionIndex >= prizeLevels.length) {
+            
+            window.audioCtl.stopBackground();
+if (currentQuestionIndex >= prizeLevels.length) {
                 const finalPrize = prizeLevels[prizeLevels.length - 1].value;
                 const title = "PARABÉNS!";
                 const text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
@@ -607,10 +916,14 @@
             timerDisplay.textContent = timeLeft;
             timerDisplay.classList.remove('low-time', 'critical-time', 'text-yellow-300');
             timerInterval = setInterval(updateTimer, 1000);
-        }
+        
+            window.audioCtl.startBackground();
+}
 
         function selectAnswer(selectedButton, correctIndex, questionID) {
-            if (!gameActive) return;
+            
+            window.audioCtl.stopBackground();
+if (!gameActive) return;
             gameActive = false;
             clearInterval(timerInterval);
 
@@ -619,7 +932,7 @@
             const correctButton = buttons[correctIndex];
 
             if (selectedIndex === correctIndex) {
-                playSound('correct');
+                window.audioCtl.playCorrect();
                 selectedButton.classList.add('correct');
                 const mainEl = document.querySelector('main');
 
@@ -628,12 +941,14 @@
                     setTimeout(() => {
                         currentQuestionIndex++;
                         score = (currentQuestionIndex > 0) ? prizeLevels[currentQuestionIndex - 1].value : 0;
-                        loadQuestion();
+                        const mainEl = document.querySelector('main');
+            mainEl.classList.remove('active');
+            setTimeout(() => { loadQuestion(); mainEl.classList.add('active'); }, 100);
                         mainEl.classList.remove('is-transitioning');
                     }, 400);
                 }, 1800);
             } else {
-                playSound('incorrect');
+                window.audioCtl.playIncorrect();
                 selectedButton.classList.add('incorrect');
                 if(correctButton) correctButton.classList.add('correct');
                 setTimeout(() => {
@@ -667,7 +982,9 @@
         }
         
         function stopGame() {
-            if (!gameActive) return;
+            
+            window.audioCtl.stopBackground();
+if (!gameActive) return;
             const currentPrize = currentQuestionIndex > 0 ? prizeLevels[currentQuestionIndex - 1].value : 0;
             const title = "Você Parou!";
             const text = (currentPrize > 0)
@@ -686,7 +1003,9 @@
                 const mainEl = document.querySelector('main');
                 mainEl.classList.add('is-transitioning');
                 setTimeout(() => {
-                    loadQuestion();
+                    const mainEl = document.querySelector('main');
+            mainEl.classList.remove('active');
+            setTimeout(() => { loadQuestion(); mainEl.classList.add('active'); }, 100);
                     mainEl.classList.remove('is-transitioning');
                 }, 400);
 
@@ -724,13 +1043,17 @@
         }
 
         function backToStartScreen() {
-            modal.classList.add('hidden');
+            
+            window.audioCtl.stopBackground();
+modal.classList.add('hidden');
             gameContainer.classList.add('hidden');
             startScreen.classList.remove('hidden');
         }
 
         function resetGame() {
-            clearInterval(timerInterval);
+            
+            window.audioCtl.stopBackground();
+clearInterval(timerInterval);
             currentQuestionIndex = 0;
             score = 0;
             helps = { skip: 1, eliminate: 1 };
@@ -753,7 +1076,9 @@
             saveMessage.classList.add('hidden');
             questionIdDisplay.textContent = '';
 
-            loadQuestion();
+            const mainEl = document.querySelector('main');
+            mainEl.classList.remove('active');
+            setTimeout(() => { loadQuestion(); mainEl.classList.add('active'); }, 100);
         }
 
         // --- RANKING FUNCTIONS (LOCAL) ---
@@ -894,11 +1219,12 @@
 
             initAudio();
             resetGame();
+            document.querySelector('main').classList.add('active');
             
             window.scrollTo(0, 0);
         });
         
-        modalButton.addEventListener('click', backToStartScreen);
+        modalButton.addEventListener('click', resetGame);
         backToStartButton.addEventListener('click', backToStartScreen);
         helpSkipBtn.addEventListener('click', () => useHelp('skip'));
         helpEliminateBtn.addEventListener('click', () => useHelp('eliminate'));
