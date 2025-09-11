@@ -24,7 +24,34 @@ Se sua pontuação for alta o suficiente para entrar no Top 5 de uma categoria, 
 ---
 
 # Histórico de Versões
+### Versão 2.1 - 11/09/2025
 
+#### Novas Funcionalidades
+* **Upload via Excel (Admin separado):** Criado arquivo `update.html` para atualizar a base de perguntas via `.xlsx`.
+* **Feedback de Progresso (Admin):** Envio de perguntas mostra andamento (X/Y).
+* **Estilização Moderna (Admin):** `update.html` com fundo em degradê verde e card centralizado.
+
+#### Melhorias no Jogo (`index.html`)
+* **Estilo e Legibilidade**
+  - “Ajuda”, “Prêmio” e contador de tempo corrigidos para aparecerem na cor correta.
+  - “Valendo” com degradê igual ao título do jogo.
+  - ID da pergunta em cinza discreto.
+* **Mecânica do Jogo**
+  - Jogador pode recomeçar diretamente no módulo escolhido após errar, sem voltar ao menu inicial.
+  - Regressiva do tempo com alerta visual (vermelho nos últimos 5 segundos) + som de Beep.
+* **Ranking**
+  - 1º, 2º, 3º lugares mantêm ouro, prata e bronze.
+  - 4º e 5º em branco para melhor legibilidade.
+  - Nome “Ranking” preto na tela inicial.
+* **Áudio**
+  - Adição de sons no jogo: música de fundo, efeitos de acerto/erro e beep nos últimos segundos.
+  - Antes o jogo era totalmente silencioso, agora tem imersão sonora.
+
+#### Segurança
+* Discussão e suporte para regras no Firestore:
+  - Leitura pública (para o jogo rodar normalmente).
+  - Escrita restrita a usuários autenticados/autorizados.
+    
 ## Versão 2.0 - 10/08/2025
 
 Esta versão representa uma grande atualização, focando na personalização da experiência do jogador e na modernização da arquitetura do jogo.
