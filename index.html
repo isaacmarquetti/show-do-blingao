@@ -1,1245 +1,801 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show do Blingão</title>
-    <script src="https://cdn.tailwindcss.com">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Show do Blingão</title>
 
-function tocarSonsVitoria() {
-  const torcida = document.getElementById("somTorcida");
-  const fogos = document.getElementById("somFogos");
-  if (torcida) { torcida.volume = 0.4; torcida.currentTime = 0; torcida.play().catch(()=>{}); }
-  if (fogos) { fogos.volume = 0.4; fogos.currentTime = 0; fogos.play().catch(()=>{}); }
-}
-</script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-      import { getFirestore, collection, getDocs, addDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyCW5SZ_WwhHXIlHE8BuY-UmW_eUSgoqqos",
-        authDomain: "show-do-blingao.firebaseapp.com",
-        projectId: "show-do-blingao",
-        storageBucket: "show-do-blingao.firebasestorage.app",
-        messagingSenderId: "255809112664",
-        appId: "1:255809112664:web:cb28e86029b5d70edd982d"
-      };
+  <!-- Tone.js (sintetizador) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
 
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
+  <!-- Fonte -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet" />
 
-      // Make db and firebase functions accessible globally
-      window.db = db;
-      window.firebase = {
-          collection,
-          getDocs,
-          addDoc
-      };
-    </script>
-    
-    <style>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
 
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: radial-gradient(circle, #0f3a21, #071e10);
-        }
-        .bling-gradient {
-            background: linear-gradient(45deg, #a8ff78, #78ffd6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .answer-option {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .answer-option:hover:not(:disabled) {
-            transform: scale(1.05);
-            background-color: #1e6b43;
-        }
-        .correct {
-            background-color: #28a745 !important;
-            color: white !important;
-            animation: pulse 0.5s 2;
-        }
-        .incorrect {
-            background-color: #dc3545 !important;
-            color: white !important;
-            animation: shake 0.5s;
-        }
-        .help-button.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background-color: #6c757d;
-        }
-        main.is-transitioning {
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        #modal, #ranking-modal {
-            transition: opacity 0.3s ease;
-        }
-        #modal.winner-modal .modal-content {
-            background-image: linear-gradient(rgba(20, 8, 41, 0.8), rgba(20, 8, 41, 0.8)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');
-            background-size: cover;
-            border: 4px solid #ffd700;
-        }
-        #modal.winner-modal h2, #modal.winner-modal p {
-            color: white;
-            text-shadow: 2px 2px 4px black;
-        }
-        #timer {
-            transition: color 0.5s, transform 0.5s;
-        }
-        #timer.low-time {
-            color: #f59e0b; /* amber-500 */
-            transform: scale(1.1);
-        }
-        
-#timer.critical-time {
-  color: #ef4444 !important; /* vermelho forte */
-  animation: pulse-strong 0.5s infinite;
-}
+    const firebaseConfig = {
+      apiKey: "AIzaSyCW5SZ_WwhHXIlHE8BuY-UmW_eUSgoqqos",
+      authDomain: "show-do-blingao.firebaseapp.com",
+      projectId: "show-do-blingao",
+      storageBucket: "show-do-blingao.firebasestorage.app",
+      messagingSenderId: "255809112664",
+      appId: "1:255809112664:web:cb28e86029b5d70edd982d"
+    };
 
-        .rank-1 { color: #ffd700; } /* Gold */
-        .rank-2 { color: #c0c0c0; } /* Silver */
-        .rank-3 { color: #cd7f32; } /* Bronze */
-        #start-button:disabled {
-            background-color: #4a5568;
-            cursor: not-allowed;
-        }
-        .subject-checkbox:checked + label {
-            background-color: #10B981;
-            border-color: #059669;
-        }
-        .ranking-tab.active {
-            background-color: #14B8A6;
-            color: white;
-        }
-    
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
+    // Expor Firestore básico globalmente (mantendo contrato do seu projeto atual)
+    window.db = db;
+    window.firebase = { collection, getDocs, addDoc };
+  </script>
 
+  <style>
+    body{font-family:'Montserrat',sans-serif;background:radial-gradient(circle,#0f3a21,#071e10)}
+    .bling-gradient{background:linear-gradient(45deg,#a8ff78,#78ffd6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .answer-option{transition:all .3s ease;cursor:pointer}
+    .answer-option:hover:not(:disabled){transform:scale(1.05);background-color:#1e6b43}
+    .correct{background-color:#28a745 !important;color:#fff !important;animation:pulse .5s 2}
+    .incorrect{background-color:#dc3545 !important;color:#fff !important;animation:shake .5s}
+    .help-button.disabled{opacity:.5;cursor:not-allowed;background-color:#6c757d}
+    main.is-transitioning{opacity:0;transition:opacity .4s ease-in-out}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    #modal,#ranking-modal{transition:opacity .3s ease}
+    #modal.winner-modal .modal-content{background-image:linear-gradient(rgba(20,8,41,.8),rgba(20,8,41,.8)),url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');background-size:cover;border:4px solid #ffd700}
+    #modal.winner-modal h2,#modal.winner-modal p{color:#fff;text-shadow:2px 2px 4px #000}
+    #timer{transition:color .5s,transform .5s}
+    #timer.low-time{color:#f59e0b;transform:scale(1.1)}
+    #timer.critical-time{color:#ef4444 !important;animation:pulse-strong .5s infinite}
+    .rank-1{color:#ffd700}.rank-2{color:#c0c0c0}.rank-3{color:#cd7f32}
+    #start-button:disabled{background-color:#4a5568;cursor:not-allowed}
+    .subject-checkbox:checked+label{background-color:#10B981;border-color:#059669}
+    .ranking-tab.active{background-color:#14B8A6;color:#fff}
 
-/* Correção para fontes visíveis após clique */
-#question-text,
-#question-id-display,
-#prize-value-display,
-.answer-option,
-#answers-container button,
-#prize-list li,
-#mensagemFinal,
-#telaJogo,
-#telaInicial,
-#telaFinal,
-.botao,
-button {
-  color: #ffffff !important;
-}
+    /* Ajuste: Remover forçamento global de texto branco em todos os botões */
+    #question-text, #question-id-display, #prize-value-display,
+    .answer-option, #answers-container button,
+    #prize-list li { color:#ffffff !important; }
 
+    /* Garantir o botão "Ranking" com texto preto */
+    #ranking-button { color:#000000 !important; }
 
-/* Ajuste fino de cores */
-#timer {
-  color: #fbbf24 !important; /* amarelo (text-yellow-300) */
-}
+    #prize-value-display{background:linear-gradient(45deg,#a8ff78,#78ffd6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900}
+    #question-id-display{color:#9ca3af !important;font-weight:600}
+    #info-header #question-id-display{color:#9ca3af !important;font-weight:600 !important}
 
-h2.font-bold.mb-3.text-xl {
-  color: #ffffff !important; /* branco para "Ajudas" e "Prêmios" */
-}
+    main{opacity:0;transition:opacity .6s ease-in-out}
+    main.active{opacity:1}
 
-#prize-value-display {
-  color: #34d399 !important; /* verde (text-green-300) */
-}
-
-
-/* Estilo para o texto "Valendo" (premiação acima da pergunta) */
-#prize-value-display {
-  background: linear-gradient(45deg, #a8ff78, #78ffd6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 900;
-}
-
-/* ID da pergunta com cinza discreto */
-#question-id-display {
-  color: #9ca3af !important; /* gray-400 */
-}
-
-
-/* Forçar ID da pergunta em cinza discreto */
-#question-id-display {
-  color: #9ca3af !important; /* gray-400 */
-  font-weight: 600;
-}
-
-
-/* Forçar ID da pergunta em cinza definitivo */
-#info-header #question-id-display {
-  color: #9ca3af !important; /* gray-400 */
-  font-weight: 600 !important;
-}
-
-
-/* Animação suave ao reiniciar o jogo */
-main.is-transitioning {
-  opacity: 0;
-  transition: opacity 0.4s ease-in-out;
-}
-
-
-/* Fade in/out real para troca de perguntas */
-main {
-  opacity: 0;
-  transition: opacity 0.6s ease-in-out;
-}
-
-main.active {
-  opacity: 1;
-}
-
-
-/* Timer crítico com pulso mais forte */
-
-#timer.critical-time {
-  color: #ef4444 !important; /* vermelho forte */
-  animation: pulse-strong 0.5s infinite;
-}
-
-
-@keyframes pulse-strong {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.4); }
-  100% { transform: scale(1); }
-}
-
-
-/* Corrigir cor do botão Ranking na tela inicial */
-#ranking-button {
-  color: #000000 !important; /* preto */
-}
-
-/* Corrigir nomes no ranking para branco */
-#ranking-list .col-span-5 {
-  color: #ffffff !important; /* branco para nomes */
-}
-
-/* Corrigir posições (1,2,3,4,5) para branco, exceto quando rank especial (ouro, prata, bronze) */
-
-
-/* Garantir que os prêmios mantenham verde */
-#ranking-list .text-green-400 {
-  color: #34d399 !important;
-}
-
-/* Garantir que o tempo mantenha cinza claro */
-#ranking-list .text-gray-400 {
-  color: #9ca3af !important;
-}
-
-
-/* Garantir que 4º e 5º lugares do ranking fiquem brancos */
-#ranking-list .grid:nth-child(4) .col-span-1,
-#ranking-list .grid:nth-child(5) .col-span-1 {
-  color: #ffffff !important;
-}
-
-
-/* Apenas 4º e 5º números do ranking em branco */
-#ranking-list .grid:nth-child(4) .col-span-1,
-#ranking-list .grid:nth-child(5) .col-span-1 {
-  color: #ffffff !important;
-}
-
-
-/* Garantir que 1º, 2º, 3º mantenham ouro, prata e bronze */
-#ranking-list .col-span-1.rank-1 { color: #ffd700 !important; }
-#ranking-list .col-span-1.rank-2 { color: #c0c0c0 !important; }
-#ranking-list .col-span-1.rank-3 { color: #cd7f32 !important; }
-
-</style>
-
-<style>
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: radial-gradient(circle, #0f3a21, #071e10);
-        }
-        .bling-gradient {
-            background: linear-gradient(45deg, #a8ff78, #78ffd6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .answer-option {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .answer-option:hover:not(:disabled) {
-            transform: scale(1.05);
-            background-color: #1e6b43;
-        }
-        .correct {
-            background-color: #28a745 !important;
-            color: white !important;
-            animation: pulse 0.5s 2;
-        }
-        .incorrect {
-            background-color: #dc3545 !important;
-            color: white !important;
-            animation: shake 0.5s;
-        }
-        .help-button.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background-color: #6c757d;
-        }
-        main.is-transitioning {
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        #modal, #ranking-modal {
-            transition: opacity 0.3s ease;
-        }
-        #modal.winner-modal .modal-content {
-            background-image: linear-gradient(rgba(20, 8, 41, 0.8), rgba(20, 8, 41, 0.8)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');
-            background-size: cover;
-            border: 4px solid #ffd700;
-        }
-        #modal.winner-modal h2, #modal.winner-modal p {
-            color: white;
-            text-shadow: 2px 2px 4px black;
-        }
-        #timer {
-            transition: color 0.5s, transform 0.5s;
-        }
-        #timer.low-time {
-            color: #f59e0b; /* amber-500 */
-            transform: scale(1.1);
-        }
-        
-#timer.critical-time {
-  color: #ef4444 !important; /* vermelho forte */
-  animation: pulse-strong 0.5s infinite;
-}
-
-        .rank-1 { color: #ffd700; } /* Gold */
-        .rank-2 { color: #c0c0c0; } /* Silver */
-        .rank-3 { color: #cd7f32; } /* Bronze */
-        #start-button:disabled {
-            background-color: #4a5568;
-            cursor: not-allowed;
-        }
-        .subject-checkbox:checked + label {
-            background-color: #10B981;
-            border-color: #059669;
-        }
-        .ranking-tab.active {
-            background-color: #14B8A6;
-            color: white;
-        }
-    
-
-
-
-/* Correção para fontes visíveis após clique */
-#question-text,
-#question-id-display,
-#prize-value-display,
-.answer-option,
-#answers-container button,
-#prize-list li,
-#mensagemFinal,
-#telaJogo,
-#telaInicial,
-#telaFinal,
-.botao,
-button {
-  color: #ffffff !important;
-}
-
-</style>
-
+    @keyframes pulse-strong{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+  </style>
 </head>
-\1
-    <!-- Áudios controlados pelo AudioController -->
-    <audio id="somAcerto" src="acerto.mp3"></audio>
-    <audio id="somErro" src="erro.mp3"></audio>
-    <audio id="somFundo" src="fundo.mp3"></audio>
-    <audio id="somBeep" src="beep.mp3"></audio>
-    
+<body class="text-white">
 
-    <div id="game-container" class="w-full max-w-6xl mx-auto hidden">
-        <header class="text-center mb-6">
-            <h1 class="text-5xl font-black uppercase bling-gradient leading-tight">Show do Blingão</h1>
-            <p class="text-lg text-gray-300">Teste seus conhecimentos sobre o Bling!</p>
-        </header>
+  <!-- Áudios do jogo -->
+  <audio id="somAcerto" src="acerto.mp3"></audio>
+  <audio id="somErro"   src="erro.mp3"></audio>
+  <audio id="somFundo"  src="fundo.mp3"></audio>
+  <audio id="somBeep"   src="beep.mp3"></audio>
+  <audio id="somTorcida" src="torcida.mp3"></audio>
+  <audio id="somFogos"   src="fogos.mp3"></audio>
 
-        <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
-            <!-- Game Area -->
-            <main class="w-full lg:w-3/4 bg-green-900 bg-opacity-30 p-6 rounded-2xl shadow-2xl transition-opacity duration-300">
-                <!-- Info Header: Prize Value and Timer -->
-                <div id="info-header" class="flex justify-between items-center mb-4 text-2xl font-bold px-2">
-                    <span id="question-id-display" class="text-gray-400 text-lg font-mono"></span>
-                    <span id="prize-value-display" class="text-green-300"></span>
-                    <div class="flex items-center gap-3">
-                        <span class="text-yellow-300">Tempo:</span>
-                        <span id="timer" class="text-4xl text-yellow-300">45</span>
-                    </div>
-                </div>
+  <div id="game-container" class="w-full max-w-6xl mx-auto hidden">
+    <header class="text-center mb-6 pt-14">
+      <h1 class="text-5xl font-black uppercase bling-gradient leading-tight">Show do Blingão</h1>
+      <p class="text-lg text-gray-300">Teste seus conhecimentos sobre o Bling!</p>
+    </header>
 
-                <!-- Question -->
-                <div id="question-container" class="mb-6 bg-gray-800 p-6 rounded-lg">
-                    <p id="question-text" class="text-2xl font-bold leading-relaxed"></p>
-                </div>
-
-                <!-- Answers -->
-                <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Options will be inserted here by JS -->
-                </div>
-            </main>
-
-            <!-- Sidebar -->
-            <aside class="w-full lg:w-1/4 flex flex-col gap-4">
-                <!-- Help Buttons -->
-                <div class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl text-center">
-                    <h2 class="font-bold mb-3 text-xl">Ajudas</h2>
-                    <div class="flex justify-around">
-                        <button id="help-skip" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Pular</button>
-                        <button id="help-eliminate" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Eliminar 2</button>
-                    </div>
-                </div>
-
-                <!-- Stop Button: New Position -->
-                <button id="stop-button" class="w-full bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105">PARAR</button>
-
-                <!-- Prize Table -->
-                <div id="prize-table" class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl flex-grow">
-                     <h2 class="font-bold mb-3 text-xl text-center">Prêmios</h2>
-                    <ul id="prize-list" class="space-y-1 text-lg">
-                        <!-- Prizes will be inserted here by JS -->
-                    </ul>
-                </div>
-            </aside>
+    <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
+      <!-- Área principal -->
+      <main class="w-full lg:w-3/4 bg-green-900 bg-opacity-30 p-6 rounded-2xl shadow-2xl transition-opacity duration-300">
+        <div id="info-header" class="flex justify-between items-center mb-4 text-2xl font-bold px-2">
+          <span id="question-id-display" class="text-gray-400 text-lg font-mono"></span>
+          <span id="prize-value-display" class="text-green-300"></span>
+          <div class="flex items-center gap-3">
+            <span class="text-yellow-300">Tempo:</span>
+            <span id="timer" class="text-4xl text-yellow-300">45</span>
+          </div>
         </div>
+
+        <div id="question-container" class="mb-6 bg-gray-800 p-6 rounded-lg">
+          <p id="question-text" class="text-2xl font-bold leading-relaxed"></p>
+        </div>
+
+        <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </main>
+
+      <!-- Sidebar -->
+      <aside class="w-full lg:w-1/4 flex flex-col gap-4">
+        <div class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl text-center">
+          <h2 class="font-bold mb-3 text-xl">Ajudas</h2>
+          <div class="flex justify-around">
+            <button id="help-skip" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Pular</button>
+            <button id="help-eliminate" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Eliminar 2</button>
+          </div>
+        </div>
+
+        <button id="stop-button" class="w-full bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105">PARAR</button>
+
+        <div id="prize-table" class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl flex-grow">
+          <h2 class="font-bold mb-3 text-xl text-center">Prêmios</h2>
+          <ul id="prize-list" class="space-y-1 text-lg"></ul>
+        </div>
+      </aside>
     </div>
-    
-    <!-- End Game Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
-        <div class="modal-content bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
-            <h2 id="modal-title" class="text-4xl font-black mb-4"></h2>
-            <p id="modal-text" class="text-xl mb-6"></p>
-            <p id="save-message" class="font-bold mb-4 hidden"></p>
-            
-            <div id="save-score-container" class="hidden">
-                <input type="text" id="player-name" placeholder="Digite seu nome" class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-black">
-                <button id="save-score-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl text-lg w-full">Salvar Pontuação</button>
-            </div>
+  </div>
 
-            <div id="end-game-buttons" class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button id="modal-button" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
-                <button id="back-to-start-button" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
-            </div>
-        </div>
+  <!-- Modal de fim -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+    <div class="modal-content bg-white text-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
+      <h2 id="modal-title" class="text-4xl font-black mb-4"></h2>
+      <p id="modal-text" class="text-xl mb-6"></p>
+      <p id="save-message" class="font-bold mb-4 hidden"></p>
+
+      <div id="save-score-container" class="hidden">
+        <input type="text" id="player-name" placeholder="Digite seu nome" class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-black">
+        <button id="save-score-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl text-lg w-full">Salvar Pontuação</button>
+      </div>
+
+      <div id="end-game-buttons" class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button id="modal-button" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
+        <button id="back-to-start-button" class="w-full bg-gray-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Ranking Modal -->
-    <div id="ranking-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-gray-900 border-2 border-teal-500 p-8 rounded-2xl shadow-2xl text-center max-w-3xl w-full relative">
-            <button id="close-ranking-button" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
-            <h2 class="text-4xl font-black mb-6 bling-gradient">🏆 Top 5 Jogadores 🏆</h2>
-            
-            <div id="ranking-tabs" class="flex flex-wrap justify-center gap-2 mb-4">
-                <!-- Ranking tabs will be inserted here -->
-            </div>
+  <!-- Modal Ranking -->
+  <div id="ranking-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-gray-900 border-2 border-teal-500 p-8 rounded-2xl shadow-2xl text-center max-w-3xl w-full relative">
+      <button id="close-ranking-button" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
+      <h2 class="text-4xl font-black mb-6 bling-gradient">🏆 Top 5 Jogadores 🏆</h2>
 
-            <div class="grid grid-cols-12 gap-2 items-center text-lg px-2 pb-2 border-b border-gray-700 text-gray-400 font-bold mb-3">
-                <div class="col-span-1 text-center">#</div>
-                <div class="col-span-5">Jogador</div>
-                <div class="col-span-3">Prêmio</div>
-                <div class="col-span-3 text-right">Tempo</div>
-            </div>
+      <div id="ranking-tabs" class="flex flex-wrap justify-center gap-2 mb-4"></div>
 
-            <div id="ranking-list" class="space-y-3 text-left">
-                <!-- Ranking will be inserted here -->
-            </div>
-        </div>
+      <div class="grid grid-cols-12 gap-2 items-center text-lg px-2 pb-2 border-b border-gray-700 text-gray-400 font-bold mb-3">
+        <div class="col-span-1 text-center">#</div>
+        <div class="col-span-5">Jogador</div>
+        <div class="col-span-3">Prêmio</div>
+        <div class="col-span-3 text-right">Tempo</div>
+      </div>
+
+      <div id="ranking-list" class="space-y-3 text-left"></div>
     </div>
-    
-    <!-- Loading/Start Screen -->
-    <div id="start-screen" class="text-center">
-        <h1 class="text-6xl font-black uppercase bling-gradient mb-4 leading-tight">Show do Blingão</h1>
-        <p class="text-xl text-gray-300 mb-6">Pronto para testar seus conhecimentos e ganhar prêmios?</p>
-        
-        <!-- Rules Section -->
-        <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
-            <h2 class="text-2xl font-bold text-center mb-4 text-white">Regras do Jogo</h2>
-            <ul class="list-disc list-inside space-y-2">
-                <li>Você tem <span class="font-bold text-yellow-300">45 segundos</span> para responder cada pergunta.</li>
-                <li>Se o tempo acabar, o jogo termina!</li>
-                <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
-            </ul>
-        </div>
+  </div>
 
-        <!-- Subject Selection -->
-        <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
-            <h2 class="text-2xl font-bold text-center mb-4 text-white">Escolha os Assuntos</h2>
-            <div id="subject-selection" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <!-- Checkboxes will be inserted here -->
-            </div>
-             <p id="subject-warning" class="text-red-400 text-center mt-4 hidden">Selecione pelo menos um assunto para começar!</p>
-        </div>
+  <!-- Tela inicial -->
+  <div id="start-screen" class="text-center pt-14">
+    <h1 class="text-6xl font-black uppercase bling-gradient mb-4 leading-tight">Show do Blingão</h1>
+    <p class="text-xl text-gray-300 mb-6">Pronto para testar seus conhecimentos e ganhar prêmios?</p>
 
-        <div class="flex flex-col items-center gap-4">
-            <div class="flex justify-center gap-4">
-                <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110" disabled>Começar!</button>
-                <button id="ranking-button" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
-            </div>
-             <p id="loading-status" class="text-yellow-400 mt-4">Carregando perguntas do banco de dados...</p>
-        </div>
-        
-        <footer class="mt-12 text-gray-500 text-sm">
-            <p>v2.1 - Sons e Update Admin - Seleção de Assuntos</p>
-            <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
-        </footer>
+    <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
+      <h2 class="text-2xl font-bold text-center mb-4 text-white">Regras do Jogo</h2>
+      <ul class="list-disc list-inside space-y-2">
+        <li>Você tem <span class="font-bold text-yellow-300">45 segundos</span> para responder cada pergunta.</li>
+        <li>Se o tempo acabar, o jogo termina!</li>
+        <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
+      </ul>
     </div>
 
+    <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
+      <h2 class="text-2xl font-bold text-center mb-4 text-white">Escolha os Assuntos</h2>
+      <div id="subject-selection" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
+      <p id="subject-warning" class="text-red-400 text-center mt-4 hidden">Selecione pelo menos um assunto para começar!</p>
+    </div>
 
-    <script type="module">
-    
-        // ===== AudioController (isolates audio logic, no globals conflicts) =====
-        class AudioController {
-            get acerto() { return document.getElementById("somAcerto"); }
-            get erro() { return document.getElementById("somErro"); }
-            get fundo() { return document.getElementById("somFundo"); }
+    <div class="flex flex-col items-center gap-4">
+      <div class="flex justify-center gap-4">
+        <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110" disabled>Começar!</button>
+        <button id="ranking-button" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
+      </div>
+      <p id="loading-status" class="text-yellow-400 mt-4">Carregando perguntas do banco de dados...</p>
+    </div>
 
-            playCorrect() {
-                const a = this.acerto;
-                if (a) { try { a.volume = 0.1; a.currentTime = 0; a.play().catch(()=>{}); } catch(e){} }
-            }
-            playIncorrect() {
-                const e = this.erro;
-                if (e) { try { e.volume = 0.1; e.currentTime = 0; e.play().catch(()=>{}); } catch(err){} }
-            }
-            startBackground() {
-                const f = this.fundo;
-                if (f) {
-                    f.pause();
-                    f.currentTime = 0;
-                    f.volume = 0.05;
-                    f.play().then(()=>{}).catch(err => {
-                        console.log("Autoplay bloqueado (clique exigido)", err);
-                    });
-                }
-            }
-            stopBackground() {
-                const f = this.fundo;
-                if (f) { f.pause(); f.currentTime = 0; }
-            }
+    <footer class="mt-12 text-gray-500 text-sm">
+      <p>v2.2 - Sons, Mensagens Engraçadas e Perguntas Recondicionadas</p>
+      <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
+    </footer>
+  </div>
+
+  <script type="module">
+    // ===== Controlador de Áudio =====
+    class AudioController {
+      get acerto(){return document.getElementById("somAcerto");}
+      get erro(){return document.getElementById("somErro");}
+      get fundo(){return document.getElementById("somFundo");}
+      playCorrect(){const a=this.acerto; if(a){try{a.volume=.1;a.currentTime=0;a.play().catch(()=>{});}catch(e){}}}
+      playIncorrect(){const e=this.erro; if(e){try{e.volume=.1;e.currentTime=0;e.play().catch(()=>{});}catch(err){}}}
+      startBackground(){const f=this.fundo;if(f){f.pause();f.currentTime=0;f.volume=.05;f.play().then(()=>{}).catch(err=>{console.log("Autoplay bloqueado (clique exigido)",err);});}}
+      stopBackground(){const f=this.fundo;if(f){f.pause();f.currentTime=0;}}
+    }
+    window.audioCtl = new AudioController();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // ==== Referências de elementos ====
+      const startScreen = document.getElementById('start-screen');
+      const startButton = document.getElementById('start-button');
+      const gameContainer = document.getElementById('game-container');
+      const questionText = document.getElementById('question-text');
+      const answersContainer = document.getElementById('answers-container');
+      const prizeList = document.getElementById('prize-list');
+      const helpSkipBtn = document.getElementById('help-skip');
+      const helpEliminateBtn = document.getElementById('help-eliminate');
+      const stopButton = document.getElementById('stop-button');
+      const modal = document.getElementById('modal');
+      const modalTitle = document.getElementById('modal-title');
+      const modalText = document.getElementById('modal-text');
+      const modalButton = document.getElementById('modal-button');
+      const timerDisplay = document.getElementById('timer');
+      const prizeValueDisplay = document.getElementById('prize-value-display');
+      const backToStartButton = document.getElementById('back-to-start-button');
+      const rankingButton = document.getElementById('ranking-button');
+      const rankingModal = document.getElementById('ranking-modal');
+      const closeRankingButton = document.getElementById('close-ranking-button');
+      const rankingList = document.getElementById('ranking-list');
+      const saveScoreContainer = document.getElementById('save-score-container');
+      const saveScoreButton = document.getElementById('save-score-button');
+      const endGameButtons = document.getElementById('end-game-buttons');
+      const playerNameInput = document.getElementById('player-name');
+      const loadingStatus = document.getElementById('loading-status');
+      const saveMessage = document.getElementById('save-message');
+      const questionIdDisplay = document.getElementById('question-id-display');
+      const subjectSelectionContainer = document.getElementById('subject-selection');
+      const subjectWarning = document.getElementById('subject-warning');
+      const rankingTabsContainer = document.getElementById('ranking-tabs');
+
+      // ==== Estado ====
+      let allQuestions = { easy: [], medium: [], hard: [] };
+      let gameQuestions = { easy: [], medium: [], hard: [] };
+      let usedQuestionIndices = { easy: new Set(), medium: new Set(), hard: new Set() };
+      let currentQuestionIndex = 0;
+      let score = 0;
+      let helps = { skip: 1, eliminate: 1 };
+      let gameActive = true;
+      let synth;
+      let timerInterval;
+      let timeLeft = 45;
+      let audioReady = false;
+      let gameStartTime = 0;
+      let finalScoreForRanking = 0;
+      let totalTimeForRanking = 0;
+      let currentGameCategory = '';
+      const subjects = ["Módulo Outros", "Módulo Integrações", "Módulo Fiscal", "Atendimento"];
+
+      // ==== PRÊMIOS (16 níveis com acertar/parar/errar) ====
+      const prizeLevels = [
+        { acertar: 1000,    parar: 0,       errar: 0,       difficulty: 'easy' },   // 1
+        { acertar: 2000,    parar: 1000,    errar: 500,     difficulty: 'easy' },   // 2
+        { acertar: 3000,    parar: 2000,    errar: 1000,    difficulty: 'easy' },   // 3
+        { acertar: 4000,    parar: 3000,    errar: 1500,    difficulty: 'easy' },   // 4
+        { acertar: 5000,    parar: 4000,    errar: 2000,    difficulty: 'easy' },   // 5
+        { acertar: 10000,   parar: 5000,    errar: 2500,    difficulty: 'medium' }, // 6
+        { acertar: 20000,   parar: 10000,   errar: 5000,    difficulty: 'medium' }, // 7
+        { acertar: 30000,   parar: 20000,   errar: 10000,   difficulty: 'medium' }, // 8
+        { acertar: 40000,   parar: 30000,   errar: 15000,   difficulty: 'medium' }, // 9
+        { acertar: 50000,   parar: 40000,   errar: 20000,   difficulty: 'medium' }, // 10
+        { acertar: 100000,  parar: 50000,   errar: 25000,   difficulty: 'hard' },   // 11
+        { acertar: 200000,  parar: 100000,  errar: 50000,   difficulty: 'hard' },   // 12
+        { acertar: 300000,  parar: 200000,  errar: 100000,  difficulty: 'hard' },   // 13
+        { acertar: 400000,  parar: 300000,  errar: 150000,  difficulty: 'hard' },   // 14
+        { acertar: 500000,  parar: 400000,  errar: 200000,  difficulty: 'hard' },   // 15
+        { acertar: 1000000, parar: 500000,  errar: 0,       difficulty: 'hard' }    // 16
+      ];
+
+      // ==== Mensagens engraçadas (quando ERRA) ====
+      function getFunnyErrorMessage(prize) {
+        if (prize === 0) {
+          return "😬 Desta vez não rolou, mas valeu pela participação!";
+        } else if (prize < 15000) {
+          return "💸 Pouquinho e ainda é de mentirinha... mas já conta a experiência!";
+        } else if (prize < 100000) {
+          return "😐 É uma boa grana — pena que é virtual. O que é real é o conhecimento!";
+        } else if (prize <= 500000) {
+          return "😭 Uaaaaau, quanta grana de mentira!!!";
+        } else {
+          return "😂 Chegou longe demais! Só faltou transformar os milhões virtuais em reais.";
         }
-        window.audioCtl = new AudioController();
+      }
 
-document.addEventListener('DOMContentLoaded', async () => {
-        // Game Elements
-        const startScreen = document.getElementById('start-screen');
-        const startButton = document.getElementById('start-button');
-        const gameContainer = document.getElementById('game-container');
-        const questionText = document.getElementById('question-text');
-        const answersContainer = document.getElementById('answers-container');
-        const prizeList = document.getElementById('prize-list');
-        const helpSkipBtn = document.getElementById('help-skip');
-        const helpEliminateBtn = document.getElementById('help-eliminate');
-        const stopButton = document.getElementById('stop-button');
-        const modal = document.getElementById('modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalText = document.getElementById('modal-text');
-        const modalButton = document.getElementById('modal-button');
-        const timerDisplay = document.getElementById('timer');
-        const prizeValueDisplay = document.getElementById('prize-value-display');
-        const backToStartButton = document.getElementById('back-to-start-button');
-        const rankingButton = document.getElementById('ranking-button');
-        const rankingModal = document.getElementById('ranking-modal');
-        const closeRankingButton = document.getElementById('close-ranking-button');
-        const rankingList = document.getElementById('ranking-list');
-        const saveScoreContainer = document.getElementById('save-score-container');
-        const saveScoreButton = document.getElementById('save-score-button');
-        const endGameButtons = document.getElementById('end-game-buttons');
-        const playerNameInput = document.getElementById('player-name');
-        const loadingStatus = document.getElementById('loading-status');
-        const saveMessage = document.getElementById('save-message');
-        const questionIdDisplay = document.getElementById('question-id-display');
-        const subjectSelectionContainer = document.getElementById('subject-selection');
-        const subjectWarning = document.getElementById('subject-warning');
-        const rankingTabsContainer = document.getElementById('ranking-tabs');
-
-        // Game State
-        let allQuestions = { easy: [], medium: [], hard: [] };
-        let gameQuestions = { easy: [], medium: [], hard: [] };
-        let usedQuestionIndices = { easy: new Set(), medium: new Set(), hard: new Set() };
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let helps = { skip: 1, eliminate: 1 };
-        let gameActive = true;
-        let synth; // Audio synth
-        let timerInterval;
-        let timeLeft = 45;
-        let audioReady = false;
-        let gameStartTime = 0;
-        let finalScoreForRanking = 0;
-        let totalTimeForRanking = 0;
-        let currentGameCategory = '';
-        const subjects = ["Módulo Outros", "Módulo Integrações", "Módulo Fiscal", "Atendimento"];
-
-        // Prize structure
-        const prizeLevels = [
-            { value: 1000, type: 'normal', difficulty: 'easy' }, // 1
-            { value: 2000, type: 'normal', difficulty: 'easy' }, // 2
-            { value: 3000, type: 'normal', difficulty: 'easy' }, // 3
-            { value: 4000, type: 'normal', difficulty: 'easy' }, // 4
-            { value: 5000, type: 'safe', difficulty: 'easy' },   // 5
-            { value: 10000, type: 'normal', difficulty: 'medium' }, // 6
-            { value: 20000, type: 'normal', difficulty: 'medium' }, // 7
-            { value: 30000, type: 'normal', difficulty: 'medium' }, // 8
-            { value: 40000, type: 'normal', difficulty: 'medium' }, // 9
-            { value: 50000, type: 'safe', difficulty: 'medium' },   // 10
-            { value: 100000, type: 'normal', difficulty: 'hard' }, // 11
-            { value: 200000, type: 'normal', difficulty: 'hard' }, // 12
-            { value: 300000, type: 'normal', difficulty: 'hard' }, // 13
-            { value: 500000, type: 'normal', difficulty: 'hard' }, // 14
-            { value: 1000000, type: 'final', difficulty: 'hard' }  // 15
-        ];
-
-        // --- FIREBASE FUNCTIONS ---
-        async function fetchQuestionsFromFirestore() {
-            const { db, firebase } = window;
-            const { collection, getDocs } = firebase;
-            if (!db) {
-                console.error("Firestore DB not initialized!");
-                loadingStatus.textContent = "Erro ao conectar ao banco de dados.";
-                loadingStatus.classList.remove("hidden");
-                loadingStatus.classList.add("text-red-500");
-                return false;
-            }
-            try {
-                const qCollection = collection(db, 'perguntas');
-                const querySnapshot = await getDocs(qCollection);
-                
-                querySnapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    const difficulty = data.Dificuldade.toLowerCase(); // fácil -> easy
-                    
-                    const transformedQuestion = {
-                        question: data.Pergunta,
-                        options: [
-                            data['Alternativa A'],
-                            data['Alternativa B'],
-                            data['Alternativa C'],
-                            data['Alternativa D']
-                        ],
-                        correctIndex: ['A', 'B', 'C', 'D'].indexOf(data['Resposta Correta']),
-                        ID: data.ID,
-                        subject: data.Assunto
-                    };
-
-                    if (difficulty === 'fácil' && transformedQuestion.correctIndex !== -1) {
-                        allQuestions.easy.push(transformedQuestion);
-                    } else if (difficulty === 'médio' && transformedQuestion.correctIndex !== -1) {
-                        allQuestions.medium.push(transformedQuestion);
-                    } else if (difficulty === 'difícil' && transformedQuestion.correctIndex !== -1) {
-                        allQuestions.hard.push(transformedQuestion);
-                    }
-                });
-                
-                if (allQuestions.easy.length === 0 && allQuestions.medium.length === 0 && allQuestions.hard.length === 0) {
-                     loadingStatus.textContent = "Nenhuma pergunta encontrada no banco de dados!";
-                     loadingStatus.classList.remove("hidden");
-                     loadingStatus.classList.add("text-red-500");
-                     return false;
-                }
-
-                loadingStatus.classList.add('hidden');
-                startButton.disabled = false;
-                return true;
-
-            } catch (error) {
-                console.error("Error fetching questions: ", error);
-                loadingStatus.textContent = "Erro ao carregar as perguntas.";
-                loadingStatus.classList.remove("hidden");
-                loadingStatus.classList.add("text-red-500");
-                return false;
-            }
+      // ==== Firestore ====
+      async function fetchQuestionsFromFirestore() {
+        const { db, firebase } = window;
+        const { collection, getDocs } = firebase;
+        if (!db) {
+          console.error("Firestore DB não inicializado!");
+          loadingStatus.textContent = "Erro ao conectar ao banco de dados.";
+          loadingStatus.classList.remove("hidden");
+          loadingStatus.classList.add("text-red-500");
+          return false;
         }
+        try {
+          const qCollection = collection(db, 'perguntas');
+          const querySnapshot = await getDocs(qCollection);
 
-        // --- LOCAL STORAGE RANKING FUNCTIONS ---
-        function getRankingFromLocalStorage(category) {
-            const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
-            const filteredScores = allScores.filter(score => score.category === category);
-            
-            filteredScores.sort((a, b) => {
-                if (b.prize !== a.prize) {
-                    return b.prize - a.prize;
-                }
-                return a.time - b.time;
-            });
+          querySnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const difficulty = (data.Dificuldade || '').toLowerCase();
 
-            return filteredScores.slice(0, 5);
-        }
-
-        function saveRankingToLocalStorage(newScore) {
-            const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
-            allScores.push(newScore);
-            localStorage.setItem('blingaoRanking', JSON.stringify(allScores));
-            return true;
-        }
-
-        // --- UI SETUP ---
-        function setupSubjectSelection() {
-            const allSubjectsOption = `
-                <div class="sm:col-span-1">
-                    <input type="checkbox" id="select-all" class="hidden subject-checkbox">
-                    <label for="select-all" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center font-bold h-full flex items-center justify-center">Selecionar Todos</label>
-                </div>`;
-            
-            const subjectOptions = subjects.map(subject => `
-                <div>
-                    <input type="checkbox" id="${subject.replace(/\s+/g, '-')}" value="${subject}" class="hidden subject-checkbox subject-item">
-                    <label for="${subject.replace(/\s+/g, '-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
-                </div>
-            `);
-
-            const finalHTML = `
-                ${allSubjectsOption}
-                ${subjectOptions[0]}
-                ${subjectOptions[1]}
-                <div class="hidden sm:block"></div> <!-- Placeholder -->
-                ${subjectOptions[2]}
-                ${subjectOptions[3]}
-            `;
-
-            subjectSelectionContainer.innerHTML = finalHTML;
-
-            const selectAllCheckbox = document.getElementById('select-all');
-            const subjectCheckboxes = document.querySelectorAll('.subject-item');
-
-            selectAllCheckbox.addEventListener('change', () => {
-                subjectCheckboxes.forEach(checkbox => {
-                    checkbox.checked = selectAllCheckbox.checked;
-                });
-            });
-
-            subjectCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', () => {
-                    if (!checkbox.checked) {
-                        selectAllCheckbox.checked = false;
-                    } else if ([...subjectCheckboxes].every(c => c.checked)) {
-                        selectAllCheckbox.checked = true;
-                    }
-                });
-            });
-        }
-
-        // --- AUDIO FUNCTIONS ---
-        async function initAudio() {
-            if (audioReady || typeof Tone === 'undefined') { return; }
-            try {
-                await Tone.start();
-                synth = new Tone.Synth().toDestination();
-                audioReady = true;
-            } catch (e) { console.error("Could not initialize audio.", e); }
-        }
-
-        function playSound(type) {
-            if (!synth) return;
-            if (type === 'correct') {
-                synth.triggerAttackRelease("C5", "8n", Tone.now());
-                synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
-            } else if (type === 'incorrect') {
-                synth.triggerAttackRelease("F#3", "4n", Tone.now());
-            }
-        }
-        
-        // --- GAME LOGIC ---
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-        
-        function initPrizeTable() {
-            prizeList.innerHTML = '';
-            [...prizeLevels].reverse().forEach((level, index) => {
-                const li = document.createElement('li');
-                li.dataset.level = prizeLevels.length - 1 - index;
-                let classList = 'p-2 rounded-md transition-all duration-300';
-                if (level.type === 'safe') classList += ' font-bold text-green-300';
-                if (level.type === 'final') classList += ' font-black bling-gradient';
-                li.className = classList;
-                li.textContent = `R$ ${level.value.toLocaleString('pt-BR')}`;
-                prizeList.appendChild(li);
-            });
-        }
-
-        function updatePrizeTable() {
-            document.querySelectorAll('#prize-list li').forEach(li => {
-                li.classList.remove('bg-green-400', 'text-black', 'scale-110');
-            });
-
-            if (currentQuestionIndex < prizeLevels.length) {
-                const currentLevelElement = document.querySelector(`#prize-list li[data-level='${currentQuestionIndex}']`);
-                if (currentLevelElement) {
-                    currentLevelElement.classList.add('bg-green-400', 'text-black', 'scale-110');
-                }
-            }
-        }
-        
-        function updateTimer() {
-            timeLeft--;
-            timerDisplay.textContent = timeLeft;
-            timerDisplay.classList.remove('low-time', 'critical-time');
-            if (timeLeft <= 10 && timeLeft > 5) {
-                timerDisplay.classList.add('low-time');
-            } else if (timeLeft <= 5) {
-                timerDisplay.classList.add('critical-time');
-            }
-
-            if (timeLeft <= 5 && timeLeft > 0) {
-                const beep = document.getElementById('somBeep');
-                if (beep) { try { beep.currentTime = 0; beep.play().catch(()=>{}); } catch(e){} }
-            }
-
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timeUp();
-            }
-        }
-
-        function timeUp() {
-            
-            window.audioCtl.stopBackground();
-if (!gameActive) return;
-            gameActive = false;
-            window.audioCtl.playIncorrect();
-            const finalScore = getSafePrize();
-            const title = "Tempo Esgotado!";
-            let text = (finalScore > 0) 
-                ? `O seu tempo para responder acabou. Leva para casa R$ ${finalScore.toLocaleString('pt-BR')}.`
-                : "O seu tempo para responder acabou. Agradecemos a sua participação!";
-            
-            endGame(false, title, text, finalScore);
-        }
-
-        function getQuestionByDifficulty() {
-            if (currentQuestionIndex >= prizeLevels.length) return null;
-            
-            const difficulty = prizeLevels[currentQuestionIndex].difficulty;
-            const questionPool = gameQuestions[difficulty].filter((_, i) => !usedQuestionIndices[difficulty].has(i));
-
-            if (questionPool.length === 0) {
-                console.warn(`No more questions of difficulty: ${difficulty}`);
-                return null;
-            }
-
-            const randomIndex = Math.floor(Math.random() * questionPool.length);
-            const chosenQuestion = questionPool[randomIndex];
-            
-            const originalIndex = gameQuestions[difficulty].indexOf(chosenQuestion);
-            usedQuestionIndices[difficulty].add(originalIndex);
-
-            return chosenQuestion;
-        }
-
-        function loadQuestion() {
-            
-            window.audioCtl.stopBackground();
-if (currentQuestionIndex >= prizeLevels.length) {
-                const finalPrize = prizeLevels[prizeLevels.length - 1].value;
-                const title = "PARABÉNS!";
-                const text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
-                endGame(true, title, text, finalPrize, true);
-                return;
-            }
-            
-            const questionData = getQuestionByDifficulty();
-            if (!questionData) {
-                const finalPrize = score;
-                const title = "Fim de Jogo!";
-                const text = `Você respondeu a todas as perguntas disponíveis! Parabéns! Ganhou R$ ${finalPrize.toLocaleString('pt-BR')}.`;
-                endGame(true, title, text, finalPrize);
-                return;
-            }
-
-            const currentPrize = prizeLevels[currentQuestionIndex].value;
-            prizeValueDisplay.textContent = `Valendo R$ ${currentPrize.toLocaleString('pt-BR')}`;
-            questionIdDisplay.textContent = `ID: ${questionData.ID}`;
-            questionText.textContent = questionData.question;
-            answersContainer.innerHTML = '';
-            
-            questionData.options.forEach((option, index) => {
-                const button = document.createElement('button');
-                button.className = 'answer-option bg-green-800 bg-opacity-50 text-left p-4 rounded-lg shadow-md';
-                button.innerHTML = `<span class="font-bold mr-2">${String.fromCharCode(97 + index)})</span> ${option}`;
-                button.dataset.index = index;
-                button.onclick = () => selectAnswer(button, questionData.correctIndex, questionData.ID);
-                answersContainer.appendChild(button);
-            });
-            
-            gameActive = true;
-            updatePrizeTable();
-
-            clearInterval(timerInterval);
-            timeLeft = 45;
-            timerDisplay.textContent = timeLeft;
-            timerDisplay.classList.remove('low-time', 'critical-time', 'text-yellow-300');
-            timerInterval = setInterval(updateTimer, 1000);
-        
-            window.audioCtl.startBackground();
-}
-
-        function selectAnswer(selectedButton, correctIndex, questionID) {
-            
-            window.audioCtl.stopBackground();
-if (!gameActive) return;
-            gameActive = false;
-            clearInterval(timerInterval);
-
-            const selectedIndex = parseInt(selectedButton.dataset.index);
-            const buttons = answersContainer.querySelectorAll('button');
-            const correctButton = buttons[correctIndex];
-
-            if (selectedIndex === correctIndex) {
-                window.audioCtl.playCorrect();
-                selectedButton.classList.add('correct');
-                const mainEl = document.querySelector('main');
-
-                setTimeout(() => {
-                    mainEl.classList.add('is-transitioning');
-                    setTimeout(() => {
-                        currentQuestionIndex++;
-                        score = (currentQuestionIndex > 0) ? prizeLevels[currentQuestionIndex - 1].value : 0;
-                        const mainEl = document.querySelector('main');
-            mainEl.classList.remove('active');
-            setTimeout(() => { loadQuestion(); mainEl.classList.add('active'); }, 100);
-                        mainEl.classList.remove('is-transitioning');
-                    }, 400);
-                }, 1800);
-            } else {
-                window.audioCtl.playIncorrect();
-                selectedButton.classList.add('incorrect');
-                if(correctButton) correctButton.classList.add('correct');
-                setTimeout(() => {
-                    const finalPrize = getSafePrize();
-                    const title = "Que pena, você errou!";
-                    const text = (finalPrize > 0)
-                        ? `Mas não se preocupe, ainda leva para casa R$ ${finalPrize.toLocaleString('pt-BR')}.`
-                        : "Desta vez não foi, mas agradecemos a sua participação!";
-                    endGame(false, title, text, finalPrize);
-                }, 2000);
-            }
-        }
-        
-        function getSafePrize() {
-            let safePrize = 0;
-            for(let i = 0; i < currentQuestionIndex; i++) {
-                if(prizeLevels[i].type === 'safe') {
-                    safePrize = prizeLevels[i].value;
-                }
-            }
-            return safePrize;
-        }
-
-        async function endGame(isWinner, title, text, finalPrize, isMillionaire = false) {
-             gameActive = false;
-             clearInterval(timerInterval);
-             
-             const totalTime = (Date.now() - gameStartTime) / 1000;
-             checkAndSaveScore(finalPrize, totalTime);
-             showModal(title, text, isMillionaire);
-        }
-        
-        function stopGame() {
-            
-            window.audioCtl.stopBackground();
-if (!gameActive) return;
-            const currentPrize = currentQuestionIndex > 0 ? prizeLevels[currentQuestionIndex - 1].value : 0;
-            const title = "Você Parou!";
-            const text = (currentPrize > 0)
-                ? `Parabéns pela sua jornada! Ganhou R$ ${currentPrize.toLocaleString('pt-BR')}.`
-                : "Você decidiu não arriscar. Agradecemos a sua participação!";
-            
-            endGame(false, title, text, currentPrize);
-        }
-
-        function useHelp(type) {
-            if (!gameActive) return;
-
-            if (type === 'skip' && helps.skip > 0) {
-                helps.skip--;
-                helpSkipBtn.classList.add('disabled');
-                const mainEl = document.querySelector('main');
-                mainEl.classList.add('is-transitioning');
-                setTimeout(() => {
-                    const mainEl = document.querySelector('main');
-            mainEl.classList.remove('active');
-            setTimeout(() => { loadQuestion(); mainEl.classList.add('active'); }, 100);
-                    mainEl.classList.remove('is-transitioning');
-                }, 400);
-
-            } else if (type === 'eliminate' && helps.eliminate > 0) {
-                 helps.eliminate--;
-                 helpEliminateBtn.classList.add('disabled');
-                 const buttons = Array.from(answersContainer.querySelectorAll('button'));
-                 const currentQuestionData = gameQuestions[prizeLevels[currentQuestionIndex].difficulty].find(q => q.question === questionText.textContent);
-                 if (!currentQuestionData) return;
-                 const correctIndex = currentQuestionData.correctIndex;
-                 let incorrectButtons = buttons.filter(btn => parseInt(btn.dataset.index) !== correctIndex);
-                 shuffleArray(incorrectButtons);
-                 incorrectButtons.slice(0, 2).forEach(btn => {
-                     btn.style.visibility = 'hidden';
-                     btn.disabled = true;
-                 });
-            }
-        }
-        
-        function showModal(title, text, isWinner = false) {
-            const modalContent = modal.querySelector('.modal-content');
-            modalTitle.textContent = title;
-            modalText.innerHTML = text;
-            
-            if (isWinner) {
-                modal.classList.add('winner-modal');
-                modalContent.classList.remove('bg-white', 'text-gray-800');
-            } else {
-                modal.classList.remove('winner-modal');
-                modalContent.classList.add('bg-white', 'text-gray-800');
-            }
-
-            modal.classList.remove('hidden');
-            gameContainer.classList.add('hidden');
-        }
-
-        function backToStartScreen() {
-            
-            window.audioCtl.stopBackground();
-modal.classList.add('hidden');
-            gameContainer.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-        }
-
-        function resetGame() {
-            
-            window.audioCtl.stopBackground();
-clearInterval(timerInterval);
-            currentQuestionIndex = 0;
-            score = 0;
-            helps = { skip: 1, eliminate: 1 };
-            usedQuestionIndices = { easy: new Set(), medium: new Set(), hard: new Set() };
-            
-            Object.values(gameQuestions).forEach(shuffleArray);
-            
-            gameActive = true;
-            gameStartTime = Date.now();
-            
-            helpSkipBtn.classList.remove('disabled');
-            helpEliminateBtn.classList.remove('disabled');
-            
-            modal.classList.add('hidden');
-            gameContainer.classList.remove('hidden');
-            startScreen.classList.add('hidden');
-            
-            saveScoreContainer.classList.add('hidden');
-            endGameButtons.classList.remove('hidden');
-            saveMessage.classList.add('hidden');
-            questionIdDisplay.textContent = '';
-
-            const mainEl = document.querySelector('main');
-            mainEl.classList.remove('active');
-            setTimeout(() => { loadQuestion(); mainEl.classList.add('active'); }, 100);
-        }
-
-        // --- RANKING FUNCTIONS (LOCAL) ---
-        function checkAndSaveScore(prize, time) {
-            if (prize <= 0 || !currentGameCategory) {
-                saveScoreContainer.classList.add('hidden');
-                endGameButtons.classList.remove('hidden');
-                if (prize > 0) {
-                    saveMessage.textContent = "Pontuação não elegível para este ranking (jogue com 1 ou todos os assuntos).";
-                    saveMessage.className = 'font-bold mb-4 text-yellow-600';
-                    saveMessage.classList.remove('hidden');
-                }
-                return;
-            }
-
-            const ranking = getRankingFromLocalStorage(currentGameCategory);
-            const worstScoreInRanking = ranking.length < 5 ? 0 : ranking[ranking.length - 1]?.prize || 0;
-            
-            if (ranking.length < 5 || prize > worstScoreInRanking) {
-                saveScoreContainer.classList.remove('hidden');
-                endGameButtons.classList.add('hidden');
-                finalScoreForRanking = prize;
-                totalTimeForRanking = time;
-                playerNameInput.value = localStorage.getItem('blingaoLastPlayer') || '';
-            } else {
-                saveScoreContainer.classList.add('hidden');
-                endGameButtons.classList.remove('hidden');
-            }
-        }
-        
-        function saveScore() {
-            const name = playerNameInput.value.trim();
-            if (!name) {
-                playerNameInput.focus();
-                return;
-            }
-
-            localStorage.setItem('blingaoLastPlayer', name);
-
-            const newScore = {
-                name: name,
-                prize: finalScoreForRanking,
-                time: totalTimeForRanking,
-                date: new Date().toISOString(),
-                category: currentGameCategory
+            const transformedQuestion = {
+              question: data.Pergunta,
+              options: [ data['Alternativa A'], data['Alternativa B'], data['Alternativa C'], data['Alternativa D'] ],
+              correctIndex: ['A','B','C','D'].indexOf(data['Resposta Correta']),
+              ID: data.ID,
+              subject: data.Assunto
             };
 
-            const success = saveRankingToLocalStorage(newScore);
-            if(success) {
-                saveMessage.textContent = "Pontuação salva com sucesso!";
-                saveMessage.className = 'font-bold mb-4 text-green-600';
-            } else {
-                 saveMessage.textContent = "Erro ao salvar. Tente novamente.";
-                 saveMessage.className = 'font-bold mb-4 text-red-600';
-            }
-            saveMessage.classList.remove('hidden');
+            if (transformedQuestion.correctIndex === -1) return;
+            if (difficulty === 'fácil')      allQuestions.easy.push(transformedQuestion);
+            else if (difficulty === 'médio') allQuestions.medium.push(transformedQuestion);
+            else if (difficulty === 'difícil') allQuestions.hard.push(transformedQuestion);
+          });
 
-            saveScoreContainer.classList.add('hidden');
-            endGameButtons.classList.remove('hidden');
-            playerNameInput.value = '';
+          if (allQuestions.easy.length===0 && allQuestions.medium.length===0 && allQuestions.hard.length===0) {
+            loadingStatus.textContent = "Nenhuma pergunta encontrada no banco de dados!";
+            loadingStatus.classList.remove("hidden");
+            loadingStatus.classList.add("text-red-500");
+            return false;
+          }
+
+          loadingStatus.classList.add('hidden');
+          startButton.disabled = false;
+          return true;
+        } catch (error) {
+          console.error("Erro ao carregar perguntas:", error);
+          loadingStatus.textContent = "Erro ao carregar as perguntas.";
+          loadingStatus.classList.remove("hidden");
+          loadingStatus.classList.add("text-red-500");
+          return false;
         }
+      }
 
-        function displayRanking(category = 'Geral') {
-            rankingModal.classList.remove('hidden');
-            rankingList.innerHTML = '<p class="text-gray-400 text-center">Carregando ranking...</p>';
-            
-            document.querySelectorAll('.ranking-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector(`.ranking-tab[data-category="${category}"]`).classList.add('active');
+      // ==== Ranking LocalStorage ====
+      function getRankingFromLocalStorage(category) {
+        const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
+        const filtered = allScores.filter(s => s.category === category);
+        filtered.sort((a,b) => (b.prize!==a.prize) ? (b.prize-a.prize) : (a.time-b.time));
+        return filtered.slice(0,5);
+      }
+      function saveRankingToLocalStorage(newScore) {
+        const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
+        allScores.push(newScore);
+        localStorage.setItem('blingaoRanking', JSON.stringify(allScores));
+        return true;
+      }
 
-            const ranking = getRankingFromLocalStorage(category);
-            rankingList.innerHTML = '';
+      // ==== UI ====
+      function setupSubjectSelection() {
+        const allSubjectsOption = `
+          <div class="sm:col-span-1">
+            <input type="checkbox" id="select-all" class="hidden subject-checkbox">
+            <label for="select-all" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center font-bold h-full flex items-center justify-center">Selecionar Todos</label>
+          </div>`;
 
-            if (ranking.length === 0) {
-                rankingList.innerHTML = '<p class="text-gray-400 text-center">Nenhuma pontuação registrada ainda. Seja o primeiro!</p>';
-                return;
-            }
+        const subjectOptions = subjects.map(subject => `
+          <div>
+            <input type="checkbox" id="${subject.replace(/\\s+/g,'-')}" value="${subject}" class="hidden subject-checkbox subject-item">
+            <label for="${subject.replace(/\\s+/g,'-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
+          </div>`);
 
-            ranking.forEach((score, index) => {
-                const rankClass = `rank-${index + 1}`;
-                const timeFormatted = new Date(score.time * 1000).toISOString().substr(14, 5);
+        subjectSelectionContainer.innerHTML = `
+          ${allSubjectsOption}
+          ${subjectOptions[0]}
+          ${subjectOptions[1]}
+          <div class="hidden sm:block"></div>
+          ${subjectOptions[2]}
+          ${subjectOptions[3]}`;
 
-                const scoreElement = document.createElement('div');
-                scoreElement.className = 'grid grid-cols-12 gap-2 items-center text-lg p-2 rounded-lg bg-gray-800';
-                scoreElement.innerHTML = `
-                    <div class="col-span-1 text-center font-black text-2xl ${rankClass}">${index + 1}</div>
-                    <div class="col-span-5 font-bold">${score.name}</div>
-                    <div class="col-span-3 text-green-400 font-bold">R$ ${score.prize.toLocaleString('pt-BR')}</div>
-                    <div class="col-span-3 text-right text-gray-400">${timeFormatted}</div>
-                `;
-                rankingList.appendChild(scoreElement);
-            });
-        }
-        
-        function setupRankingTabs() {
-            const categories = ['Geral', ...subjects];
-            rankingTabsContainer.innerHTML = categories.map(cat => {
-                let buttonText = cat;
-                if (cat !== 'Geral') {
-                    buttonText = cat.replace('Módulo ', 'Módulo<br>');
-                } else {
-                    buttonText = 'Todos os<br>Assuntos';
-                }
-                return `<button class="ranking-tab w-32 px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition text-center flex items-center justify-center h-16" data-category="${cat}">${buttonText}</button>`
-            }).join('');
-            
-            rankingTabsContainer.addEventListener('click', (e) => {
-                const button = e.target.closest('.ranking-tab');
-                if (button) {
-                    const category = button.dataset.category;
-                    displayRanking(category);
-                }
-            });
-        }
+        const selectAllCheckbox = document.getElementById('select-all');
+        const subjectCheckboxes = document.querySelectorAll('.subject-item');
 
-        // --- INITIALIZATION ---
-        startButton.addEventListener('click', () => {
-            const selectedSubjects = [...document.querySelectorAll('.subject-item:checked')].map(cb => cb.value);
-            
-            if (selectedSubjects.length === 0) {
-                subjectWarning.classList.remove('hidden');
-                return;
-            }
-            subjectWarning.classList.add('hidden');
-
-            // Filter questions for the game
-            gameQuestions.easy = allQuestions.easy.filter(q => selectedSubjects.includes(q.subject));
-            gameQuestions.medium = allQuestions.medium.filter(q => selectedSubjects.includes(q.subject));
-            gameQuestions.hard = allQuestions.hard.filter(q => selectedSubjects.includes(q.subject));
-            
-            // Determine category for ranking
-            if (selectedSubjects.length === 1) {
-                currentGameCategory = selectedSubjects[0];
-            } else if (selectedSubjects.length === subjects.length) {
-                currentGameCategory = 'Geral';
-            } else {
-                currentGameCategory = ''; // Not eligible for specific rankings
-            }
-
-            initAudio();
-            resetGame();
-            document.querySelector('main').classList.add('active');
-            
-            window.scrollTo(0, 0);
+        selectAllCheckbox.addEventListener('change', () => {
+          subjectCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
         });
-        
-        modalButton.addEventListener('click', resetGame);
-        backToStartButton.addEventListener('click', backToStartScreen);
-        helpSkipBtn.addEventListener('click', () => useHelp('skip'));
-        helpEliminateBtn.addEventListener('click', () => useHelp('eliminate'));
-        stopButton.addEventListener('click', stopGame);
-        rankingButton.addEventListener('click', () => displayRanking('Geral'));
-        closeRankingButton.addEventListener('click', () => rankingModal.classList.add('hidden'));
-        saveScoreButton.addEventListener('click', saveScore);
-        
-        // Initial load
-        initPrizeTable();
-        setupSubjectSelection();
-        setupRankingTabs();
-        await fetchQuestionsFromFirestore();
+        subjectCheckboxes.forEach(cb => {
+          cb.addEventListener('change', () => {
+            if (!cb.checked) selectAllCheckbox.checked = false;
+            else if ([...subjectCheckboxes].every(c=>c.checked)) selectAllCheckbox.checked = true;
+          });
+        });
+      }
+
+      function setupRankingTabs(){
+        const categories = ['Geral', ...subjects];
+        rankingTabsContainer.innerHTML = categories.map(cat => {
+          const text = (cat!=='Geral') ? cat.replace('Módulo ','Módulo<br>') : 'Todos os<br>Assuntos';
+          return `<button class="ranking-tab w-32 px-4 py-2 rounded-md bg-gray-700 hover:bg-teal-600 transition text-center flex items-center justify-center h-16" data-category="${cat}">${text}</button>`;
+        }).join('');
+        rankingTabsContainer.addEventListener('click', (e)=>{
+          const btn = e.target.closest('.ranking-tab');
+          if (btn){ displayRanking(btn.dataset.category); }
+        });
+      }
+
+      function displayRanking(category='Geral'){
+        rankingModal.classList.remove('hidden');
+        rankingList.innerHTML = '<p class="text-gray-400 text-center">Carregando ranking...</p>';
+        document.querySelectorAll('.ranking-tab').forEach(tab=>tab.classList.remove('active'));
+        const active = document.querySelector(`.ranking-tab[data-category="${category}"]`);
+        if (active) active.classList.add('active');
+        const r = getRankingFromLocalStorage(category);
+        rankingList.innerHTML='';
+        if (r.length===0){ rankingList.innerHTML='<p class="text-gray-400 text-center">Nenhuma pontuação registrada ainda. Seja o primeiro!</p>'; return; }
+        r.forEach((s,i)=>{
+          const rankClass = `rank-${i+1}`;
+          const timeFormatted = new Date(s.time*1000).toISOString().substr(14,5);
+          const el = document.createElement('div');
+          el.className='grid grid-cols-12 gap-2 items-center text-lg p-2 rounded-lg bg-gray-800';
+          el.innerHTML = `
+            <div class="col-span-1 text-center font-black text-2xl ${rankClass}">${i+1}</div>
+            <div class="col-span-5 font-bold">${s.name}</div>
+            <div class="col-span-3 text-green-400 font-bold">R$ ${s.prize.toLocaleString('pt-BR')}</div>
+            <div class="col-span-3 text-right text-gray-400">${timeFormatted}</div>`;
+          rankingList.appendChild(el);
+        });
+      }
+
+      // ==== Áudio adicional ====
+      async function initAudio() {
+        if (audioReady || typeof Tone === 'undefined') return;
+        try { await Tone.start(); synth = new Tone.Synth().toDestination(); audioReady = true; } catch(e){ console.error("Não foi possível iniciar áudio.", e); }
+      }
+      function playSound(type){
+        if (!synth) return;
+        if (type==='correct'){ synth.triggerAttackRelease("C5","8n",Tone.now()); synth.triggerAttackRelease("G5","8n",Tone.now()+0.2); }
+        else if (type==='incorrect'){ synth.triggerAttackRelease("F#3","4n",Tone.now()); }
+      }
+
+      // ==== Util ====
+      function shuffleArray(array){
+        for (let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]]; }
+      }
+
+      // ==== Prêmios (UI) ====
+      function initPrizeTable() {
+        prizeList.innerHTML = '';
+        [...prizeLevels].reverse().forEach((level, index) => {
+          const li = document.createElement('li');
+          const questionNumber = prizeLevels.length - index; // 16..1
+          li.dataset.level = questionNumber - 1;            // 15..0
+          let classList = 'p-1.5 rounded-md transition-all duration-300 flex justify-between items-center text-sm';
+          if (questionNumber === prizeLevels.length) classList += ' font-black bling-gradient';
+          li.className = classList;
+          li.innerHTML = `
+            <span>${questionNumber}. <span class="font-bold">R$ ${level.acertar.toLocaleString('pt-BR')}</span></span>
+            <span class="text-red-400 text-xs">Errar: R$ ${level.errar.toLocaleString('pt-BR')}</span>`;
+          prizeList.appendChild(li);
+        });
+      }
+      function updatePrizeTable() {
+        document.querySelectorAll('#prize-list li').forEach(li => li.classList.remove('bg-green-400','text-black','scale-110'));
+        if (currentQuestionIndex < prizeLevels.length) {
+          const el = document.querySelector(`#prize-list li[data-level='${currentQuestionIndex}']`);
+          if (el) el.classList.add('bg-green-400','text-black','scale-110');
+        }
+      }
+
+      function updateTimer() {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+        timerDisplay.classList.remove('low-time','critical-time');
+        if (timeLeft <= 10 && timeLeft > 5) timerDisplay.classList.add('low-time');
+        else if (timeLeft <= 5) {
+          timerDisplay.classList.add('critical-time');
+          const beep = document.getElementById('somBeep'); if (beep){ try{ beep.currentTime=0; beep.play().catch(()=>{});}catch(e){} }
+        }
+        if (timeLeft <= 0) { clearInterval(timerInterval); timeUp(); }
+      }
+
+      function timeUp() {
+        window.audioCtl.stopBackground();
+        if (!gameActive) return;
+        gameActive = false;
+        window.audioCtl.playIncorrect();
+        const finalPrize = prizeLevels[currentQuestionIndex]?.errar || 0;
+        const title = "Tempo Esgotado!";
+        const funny = getFunnyErrorMessage(finalPrize);
+        const text = (finalPrize>0)
+          ? `O tempo acabou.<br>Você leva: <strong class="text-2xl font-bold">R$ ${finalPrize.toLocaleString('pt-BR')}</strong><br><br>${funny}`
+          : `O tempo acabou.<br>${funny}`;
+        endGame(false, title, text, finalPrize);
+      }
+
+      function getQuestionByDifficulty() {
+        if (currentQuestionIndex >= prizeLevels.length) return null;
+        const difficulty = prizeLevels[currentQuestionIndex].difficulty;
+        const pool = gameQuestions[difficulty].filter((_,i)=>!usedQuestionIndices[difficulty].has(i));
+        if (pool.length===0) { console.warn("Sem perguntas para:", difficulty); return null; }
+        const idx = Math.floor(Math.random()*pool.length);
+        const chosen = pool[idx];
+        const originalIndex = gameQuestions[difficulty].indexOf(chosen);
+        usedQuestionIndices[difficulty].add(originalIndex);
+        return chosen;
+      }
+
+      function loadQuestion() {
+        window.audioCtl.stopBackground();
+        if (currentQuestionIndex >= prizeLevels.length) {
+          const finalPrize = prizeLevels[prizeLevels.length-1].acertar;
+          const title = "PARABÉNS!";
+          const text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
+          endGame(true, title, text, finalPrize, true);
+          return;
+        }
+
+        const q = getQuestionByDifficulty();
+        if (!q) {
+          const finalPrize = score;
+          const title = "Fim de Jogo!";
+          const text = `Você respondeu a todas as perguntas disponíveis! Parabéns! Ganhou R$ ${finalPrize.toLocaleString('pt-BR')}.`;
+          endGame(true, title, text, finalPrize);
+          return;
+        }
+
+        const currentPrize = prizeLevels[currentQuestionIndex].acertar;
+        prizeValueDisplay.textContent = `Valendo R$ ${currentPrize.toLocaleString('pt-BR')}`;
+        questionIdDisplay.textContent = `ID: ${q.ID}`;
+        questionText.textContent = q.question;
+        answersContainer.innerHTML = '';
+
+        q.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'answer-option bg-green-800 bg-opacity-50 text-left p-4 rounded-lg shadow-md';
+          btn.innerHTML = `<span class="font-bold mr-2">${String.fromCharCode(97+idx)})</span> ${opt}`;
+          btn.dataset.index = idx;
+          btn.onclick = () => selectAnswer(btn, q.correctIndex, q.ID);
+          answersContainer.appendChild(btn);
+        });
+
+        gameActive = true;
+        updatePrizeTable();
+        clearInterval(timerInterval);
+        timeLeft = 45;
+        timerDisplay.textContent = timeLeft;
+        timerDisplay.classList.remove('low-time','critical-time','text-yellow-300');
+        timerInterval = setInterval(updateTimer, 1000);
+        window.audioCtl.startBackground();
+      }
+
+      function selectAnswer(selectedButton, correctIndex, questionID) {
+        window.audioCtl.stopBackground();
+        if (!gameActive) return;
+        gameActive = false;
+        clearInterval(timerInterval);
+
+        const selectedIndex = parseInt(selectedButton.dataset.index);
+        const buttons = answersContainer.querySelectorAll('button');
+        const correctButton = buttons[correctIndex];
+
+        if (selectedIndex === correctIndex) {
+          window.audioCtl.playCorrect(); /* synth opcional */ 
+          selectedButton.classList.add('correct');
+          const mainEl = document.querySelector('main');
+          setTimeout(()=>{
+            mainEl.classList.add('is-transitioning');
+            setTimeout(()=>{
+              score = prizeLevels[currentQuestionIndex].acertar;
+              currentQuestionIndex++;
+              const m = document.querySelector('main');
+              m.classList.remove('active');
+              setTimeout(()=>{ loadQuestion(); m.classList.add('active'); }, 100);
+              mainEl.classList.remove('is-transitioning');
+            }, 400);
+          }, 1000);
+        } else {
+          window.audioCtl.playIncorrect();
+          selectedButton.classList.add('incorrect');
+          if (correctButton) correctButton.classList.add('correct');
+          setTimeout(()=>{
+            const finalPrize = prizeLevels[currentQuestionIndex].errar;
+            const title = "Que pena, você errou!";
+            const funny = getFunnyErrorMessage(finalPrize);
+            const text = (finalPrize>=0)
+              ? `Você ganhou:<br><strong class="text-2xl font-bold">R$ ${finalPrize.toLocaleString('pt-BR')}</strong><br><br>${funny}`
+              : "Desta vez não foi, mas agradecemos a sua participação!";
+            endGame(false, title, text, finalPrize);
+          }, 1200);
+        }
+      }
+
+      function getCurrentPararPrize(){
+        return prizeLevels[currentQuestionIndex]?.parar ?? 0;
+      }
+
+      // Centraliza o fim de jogo + ranking
+      function endGame(isWinner, title, text, finalPrize, isMillionaire=false) {
+        gameActive = false;
+        clearInterval(timerInterval);
+        const totalTime = (Date.now()-gameStartTime)/1000;
+        checkAndSaveScore(finalPrize, totalTime);
+        showModal(title, text, isMillionaire);
+      }
+
+      function stopGame() {
+        window.audioCtl.stopBackground();
+        if (!gameActive) return;
+        const currentPrize = getCurrentPararPrize();
+        const title = "Você Parou!";
+        const text = (currentPrize>0)
+          ? `Parabéns! Você leva R$ ${currentPrize.toLocaleString('pt-BR')}.`
+          : "Você decidiu não arriscar. Agradecemos a sua participação!";
+        endGame(false, title, text, currentPrize);
+      }
+
+      function showModal(title, text, isWinner=false){
+        const modalContent = modal.querySelector('.modal-content');
+        modalTitle.textContent = title;
+        modalText.innerHTML = text;
+        if (isWinner){ modal.classList.add('winner-modal'); modalContent.classList.remove('bg-white','text-gray-800'); }
+        else { modal.classList.remove('winner-modal'); modalContent.classList.add('bg-white','text-gray-800'); }
+        modal.classList.remove('hidden');
+        gameContainer.classList.add('hidden');
+      }
+
+      function backToStartScreen(){
+        window.audioCtl.stopBackground();
+        modal.classList.add('hidden');
+        gameContainer.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+      }
+
+      function resetGame(){
+        window.audioCtl.stopBackground();
+        clearInterval(timerInterval);
+        currentQuestionIndex = 0;
+        score = 0;
+        helps = { skip:1, eliminate:1 };
+        usedQuestionIndices = { easy:new Set(), medium:new Set(), hard:new Set() };
+        Object.values(gameQuestions).forEach(shuffleArray);
+        gameActive = true;
+        gameStartTime = Date.now();
+        helpSkipBtn.classList.remove('disabled');
+        helpEliminateBtn.classList.remove('disabled');
+        modal.classList.add('hidden');
+        gameContainer.classList.remove('hidden');
+        startScreen.classList.add('hidden');
+        const m = document.querySelector('main');
+        m.classList.remove('active');
+        setTimeout(()=>{ loadQuestion(); m.classList.add('active'); }, 100);
+      }
+
+      // Ranking
+      function checkAndSaveScore(prize, time){
+        if (prize<=0 || !currentGameCategory){
+          saveScoreContainer.classList.add('hidden');
+          endGameButtons.classList.remove('hidden');
+          if (prize>0){
+            saveMessage.textContent="Pontuação não elegível para este ranking (jogue com 1 assunto ou com todos).";
+            saveMessage.className='font-bold mb-4 text-yellow-600';
+            saveMessage.classList.remove('hidden');
+          }
+          return;
+        }
+        const ranking = getRankingFromLocalStorage(currentGameCategory);
+        const worst = ranking.length<5 ? 0 : (ranking[ranking.length-1]?.prize||0);
+        if (ranking.length<5 || prize>worst){
+          saveScoreContainer.classList.remove('hidden');
+          endGameButtons.classList.add('hidden');
+          finalScoreForRanking = prize;
+          totalTimeForRanking = time;
+          playerNameInput.value = localStorage.getItem('blingaoLastPlayer') || '';
+        } else {
+          saveScoreContainer.classList.add('hidden');
+          endGameButtons.classList.remove('hidden');
+        }
+      }
+      function saveScore(){
+        const name = playerNameInput.value.trim();
+        if (!name){ playerNameInput.focus(); return; }
+        localStorage.setItem('blingaoLastPlayer', name);
+        const newScore = { name, prize:finalScoreForRanking, time:totalTimeForRanking, date:new Date().toISOString(), category:currentGameCategory };
+        const ok = saveRankingToLocalStorage(newScore);
+        if (ok){ saveMessage.textContent="Pontuação salva com sucesso!"; saveMessage.className='font-bold mb-4 text-green-600'; }
+        else { saveMessage.textContent="Erro ao salvar. Tente novamente."; saveMessage.className='font-bold mb-4 text-red-600'; }
+        saveMessage.classList.remove('hidden');
+        saveScoreContainer.classList.add('hidden');
+        endGameButtons.classList.remove('hidden');
+        playerNameInput.value='';
+      }
+
+      function setupRankingTabsShim(){ 
+        const categories = ['Geral', ...subjects];
+        rankingTabsContainer.innerHTML = categories.map(cat => {
+          const text = (cat!=='Geral') ? cat.replace('Módulo ','Módulo<br>') : 'Todos os<br>Assuntos';
+          return `<button class="ranking-tab w-32 px-4 py-2 rounded-md bg-gray-700 hover:bg-teal-600 transition text-center flex items-center justify-center h-16" data-category="${cat}">${text}</button>`;
+        }).join('');
+        rankingTabsContainer.addEventListener('click', (e)=>{
+          const btn = e.target.closest('.ranking-tab');
+          if (btn){ displayRanking(btn.dataset.category); }
+        });
+      }
+      function setupSubjectSelectionShim(){ 
+        const allSubjectsOption = `
+          <div class="sm:col-span-1">
+            <input type="checkbox" id="select-all" class="hidden subject-checkbox">
+            <label for="select-all" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center font-bold h-full flex items-center justify-center">Selecionar Todos</label>
+          </div>`;
+
+        const subjectOptions = subjects.map(subject => `
+          <div>
+            <input type="checkbox" id="${subject.replace(/\\s+/g,'-')}" value="${subject}" class="hidden subject-checkbox subject-item">
+            <label for="${subject.replace(/\\s+/g,'-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
+          </div>`);
+
+        subjectSelectionContainer.innerHTML = `
+          ${allSubjectsOption}
+          ${subjectOptions[0]}
+          ${subjectOptions[1]}
+          <div class="hidden sm:block"></div>
+          ${subjectOptions[2]}
+          ${subjectOptions[3]}`;
+
+        const selectAllCheckbox = document.getElementById('select-all');
+        const subjectCheckboxes = document.querySelectorAll('.subject-item');
+
+        selectAllCheckbox.addEventListener('change', () => {
+          subjectCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+        });
+        subjectCheckboxes.forEach(cb => {
+          cb.addEventListener('change', () => {
+            if (!cb.checked) selectAllCheckbox.checked = false;
+            else if ([...subjectCheckboxes].every(c=>c.checked)) selectAllCheckbox.checked = true;
+          });
+        });
+      }
+
+      // ==== Inicialização ====
+      startButton.addEventListener('click', () => {
+        const selected = [...document.querySelectorAll('.subject-item:checked')].map(cb=>cb.value);
+        if (selected.length===0){ subjectWarning.classList.remove('hidden'); return; }
+        subjectWarning.classList.add('hidden');
+
+        gameQuestions.easy   = allQuestions.easy.filter(q=>selected.includes(q.subject));
+        gameQuestions.medium = allQuestions.medium.filter(q=>selected.includes(q.subject));
+        gameQuestions.hard   = allQuestions.hard.filter(q=>selected.includes(q.subject));
+
+        if (selected.length===1) currentGameCategory = selected[0];
+        else if (selected.length===subjects.length) currentGameCategory = 'Geral';
+        else currentGameCategory = '';
+
+        initAudio();
+        resetGame();
+        document.querySelector('main').classList.add('active');
+        window.scrollTo(0,0);
+      });
+
+      modalButton.addEventListener('click', resetGame);
+      backToStartButton.addEventListener('click', backToStartScreen);
+      helpSkipBtn.addEventListener('click', ()=>{ if(helps.skip>0){ helps.skip--; helpSkipBtn.classList.add('disabled'); loadQuestion(); }});
+      helpEliminateBtn.addEventListener('click', ()=>{
+        if(helps.eliminate>0){
+          helps.eliminate--;
+          helpEliminateBtn.classList.add('disabled');
+          const buttons = Array.from(answersContainer.querySelectorAll('button'));
+          const currentQuestionData = gameQuestions[prizeLevels[currentQuestionIndex].difficulty].find(q=>q.question===questionText.textContent);
+          if (!currentQuestionData) return;
+          const correctIndex = currentQuestionData.correctIndex;
+          let incorrectButtons = buttons.filter(btn => parseInt(btn.dataset.index)!==correctIndex);
+          // esconder 2 erradas
+          incorrectButtons.slice(0,2).forEach(btn => { btn.style.visibility='hidden'; btn.disabled=true; });
+        }
+      });
+      stopButton.addEventListener('click', stopGame);
+      rankingButton.addEventListener('click', ()=>displayRanking('Geral'));
+      closeRankingButton.addEventListener('click', ()=>rankingModal.classList.add('hidden'));
+      saveScoreButton?.addEventListener('click', saveScore);
+
+      // Carregar UI e dados
+      initPrizeTable();
+      setupSubjectSelectionShim();
+      setupRankingTabsShim();
+      await fetchQuestionsFromFirestore();
+      // startButton habilitado no fetch em caso de sucesso
     });
-    </script>
+  </script>
 </body>
 </html>
-

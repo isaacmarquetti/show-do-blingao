@@ -24,6 +24,27 @@ Se sua pontuação for alta o suficiente para entrar no Top 5 de uma categoria, 
 ---
 
 # Histórico de Versões
+
+### Versão 2.2 - 12/09/2025
+
+#### Novas Funcionalidades
+* **16 Etapas de Prêmios:** Reintrodução do valor de R$ 400.000, totalizando agora 16 níveis.
+* **Prêmios Detalhados:** Cada etapa tem valores distintos para **acertar, parar e errar**, trazendo mais estratégia para o jogo.
+* **Mensagens Engraçadas:** Inseridas mensagens divertidas e temáticas quando o jogador **erra** ou escolhe **parar**, sempre lembrando que o dinheiro é fictício.
+
+#### Melhorias no Layout
+* **Sidebar de Prêmios:** Agora exibe também o valor ganho em caso de erro ao lado de cada etapa.
+* **Tela Inicial e In-Game:** Ajustado o espaçamento do título “Show do Blingão” para não ficar colado no topo.
+* **Ranking Tabs:** Cores no hover ajustadas para permanecerem verdes, evitando confusão visual.
+
+#### Mecânica do Jogo
+* **Perguntas Recondicionadas:** A base de perguntas e respostas foi revisada e reorganizada para aumentar a dificuldade e desafiar ainda mais os jogadores.
+
+#### Experiência do Jogador
+* **Feedback Mais Divertido:** Tanto em erros quanto na escolha de parar, o jogador recebe frases engraçadas personalizadas conforme o valor alcançado.
+* **Atmosfera de Jogo Mais Rica:** Integração de sons (acerto, erro, beep, torcida, fogos e fundo musical) mantém a imersão.
+
+---
 ### Versão 2.1 - 11/09/2025
 
 #### Novas Funcionalidades
