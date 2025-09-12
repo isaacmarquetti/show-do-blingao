@@ -302,6 +302,22 @@
         }
       }
 
+      
+      // ==== Mensagens engraçadas (quando PARAR) ====
+      function getFunnyPararMessage(prize) {
+        if (prize === 0) {
+          return "😅 Você preferiu não arriscar e saiu sem nada... mas valeu a coragem!";
+        } else if (prize <= 10000) {
+          return "💸 Saiu cedo do jogo, mas já garantiu uns trocados... de mentira, claro.";
+        } else if (prize <= 100000) {
+          return "🤔 Jogou com cautela, e garantiu uma boa grana fictícia!";
+        } else if (prize <= 500000) {
+          return "😎 Mandou bem! Parou na hora certa e levou uma bolada fake!";
+        } else {
+          return "😂 Você podia ser milionário, mas preferiu parar. Os milhões continuariam só na imaginação!";
+        }
+      }
+
       // ==== Firestore ====
       async function fetchQuestionsFromFirestore() {
         const { db, firebase } = window;
@@ -620,9 +636,10 @@
         if (!gameActive) return;
         const currentPrize = getCurrentPararPrize();
         const title = "Você Parou!";
+        const funny = getFunnyPararMessage(currentPrize);
         const text = (currentPrize>0)
-          ? `Parabéns! Você leva R$ ${currentPrize.toLocaleString('pt-BR')}.`
-          : "Você decidiu não arriscar. Agradecemos a sua participação!";
+          ? `Você decidiu parar com: <br><strong class="text-2xl font-bold">R$ ${currentPrize.toLocaleString('pt-BR')}</strong><br><br>${funny}`
+          : funny;
         endGame(false, title, text, currentPrize);
       }
 
