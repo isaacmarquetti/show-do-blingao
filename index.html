@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Show do Blingão</title>
 
   <!-- Tailwind -->
@@ -37,54 +38,261 @@
   </script>
 
   <style>
-    body{font-family:'Montserrat',sans-serif;background:radial-gradient(circle,#0f3a21,#071e10)}
-    .bling-gradient{background:linear-gradient(45deg,#a8ff78,#78ffd6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .answer-option{transition:all .3s ease;cursor:pointer}
-    .answer-option:hover:not(:disabled){transform:scale(1.05);background-color:#1e6b43}
-    .correct{background-color:#28a745 !important;color:#fff !important;animation:pulse .5s 2}
-    .incorrect{background-color:#dc3545 !important;color:#fff !important;animation:shake .5s}
-    .help-button.disabled{opacity:.5;cursor:not-allowed;background-color:#6c757d}
-    main.is-transitioning{opacity:0;transition:opacity .4s ease-in-out}
-    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
-    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-    #modal,#ranking-modal{transition:opacity .3s ease}
-    #modal.winner-modal .modal-content{background-image:linear-gradient(rgba(20,8,41,.8),rgba(20,8,41,.8)),url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');background-size:cover;border:4px solid #ffd700}
-    #modal.winner-modal h2,#modal.winner-modal p{color:#fff;text-shadow:2px 2px 4px #000}
-    #timer{transition:color .5s,transform .5s}
-    #timer.low-time{color:#f59e0b;transform:scale(1.1)}
-    #timer.critical-time{color:#ef4444 !important;animation:pulse-strong .5s infinite}
-    .rank-1{color:#ffd700}.rank-2{color:#c0c0c0}.rank-3{color:#cd7f32}
-    #start-button:disabled{background-color:#4a5568;cursor:not-allowed}
-    .subject-checkbox:checked+label{background-color:#10B981;border-color:#059669}
-    .ranking-tab.active{background-color:#14B8A6;color:#fff}
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: radial-gradient(circle, #0f3a21, #071e10)
+    }
+
+    .bling-gradient {
+      background: linear-gradient(45deg, #a8ff78, #78ffd6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    .answer-option {
+      transition: all .3s ease;
+      cursor: pointer
+    }
+
+    .answer-option:hover:not(:disabled) {
+      transform: scale(1.05);
+      background-color: #1e6b43
+    }
+
+    .correct {
+      background-color: #28a745 !important;
+      color: #fff !important;
+      animation: pulse .5s 2
+    }
+
+    .incorrect {
+      background-color: #dc3545 !important;
+      color: #fff !important;
+      animation: shake .5s
+    }
+
+    .help-button.disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      background-color: #6c757d
+    }
+
+    main.is-transitioning {
+      opacity: 0;
+      transition: opacity .4s ease-in-out
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.05)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      25% {
+        transform: translateX(-5px)
+      }
+
+      75% {
+        transform: translateX(5px)
+      }
+    }
+
+    #modal,
+    #ranking-modal {
+      transition: opacity .3s ease
+    }
+
+    #modal.winner-modal .modal-content {
+      background-image: linear-gradient(rgba(20, 8, 41, .8), rgba(20, 8, 41, .8)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5uY3Vsc2l2ZzJ2c3J0ZzZpZ3l2a215aXl0Z3Z0cWJ2eXN2b25qZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/s2qXK8wAvkHTO/giphy.gif');
+      background-size: cover;
+      border: 4px solid #ffd700
+    }
+
+    #modal.winner-modal h2,
+    #modal.winner-modal p {
+      color: #fff;
+      text-shadow: 2px 2px 4px #000
+    }
+
+    #timer {
+      transition: color .5s, transform .5s
+    }
+
+    #timer.low-time {
+      color: #f59e0b;
+      transform: scale(1.1)
+    }
+
+    #timer.critical-time {
+      color: #ef4444 !important;
+      animation: pulse-strong .5s infinite
+    }
+
+    .rank-1 {
+      color: #ffd700
+    }
+
+    .rank-2 {
+      color: #c0c0c0
+    }
+
+    .rank-3 {
+      color: #cd7f32
+    }
+
+    #start-button:disabled {
+      background-color: #4a5568;
+      cursor: not-allowed
+    }
+
+    .subject-checkbox:checked+label {
+      background-color: #10B981;
+      border-color: #059669
+    }
+
+    .ranking-tab.active {
+      background-color: #14B8A6;
+      color: #fff
+    }
+
+    /* Indicador da resposta correta para testes */
+
+    /* Estilo especial para pergunta de milhão */
+    .million-question {
+      border: 3px solid #FFD700 !important;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%) !important;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5) !important;
+      animation: goldenGlow 2s ease-in-out infinite alternate;
+    }
+
+    .million-question .question-text {
+      color: #FFD700 !important;
+      font-size: 1.5rem !important;
+      font-weight: 900 !important;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .million-question .prize-value {
+      color: #FFD700 !important;
+      font-size: 2rem !important;
+      font-weight: 900 !important;
+      animation: goldenPulse 1.5s ease-in-out infinite;
+    }
+
+    /* Forçar cor amarela com mais especificidade */
+    main.million-question #prize-value-display {
+      color: #FFD700 !important;
+      font-size: 2rem !important;
+      font-weight: 900 !important;
+    }
+
+
+
+    @keyframes goldenPulse {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.05);
+      }
+    }
 
     /* Ajuste: Remover forçamento global de texto branco em todos os botões */
-    #question-text, #question-id-display, #prize-value-display,
-    .answer-option, #answers-container button,
-    #prize-list li { color:#ffffff !important; }
+    #question-text,
+    #question-id-display,
+    #prize-value-display,
+    .answer-option,
+    #answers-container button,
+    #prize-list li {
+      color: #ffffff !important;
+    }
 
     /* Garantir o botão "Ranking" com texto preto */
-    #ranking-button { color:#000000 !important; }
+    #ranking-button {
+      color: #000000 !important;
+    }
 
-    #prize-value-display{background:linear-gradient(45deg,#a8ff78,#78ffd6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900}
-    #question-id-display{color:#9ca3af !important;font-weight:600}
-    #info-header #question-id-display{color:#9ca3af !important;font-weight:600 !important}
+    #prize-value-display {
+      background: linear-gradient(45deg, #a8ff78, #78ffd6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900
+    }
 
-    main{opacity:0;transition:opacity .6s ease-in-out}
-    main.active{opacity:1}
+    /* Sobrescrever para pergunta de milhão */
+    main.million-question #prize-value-display {
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: unset !important;
+      color: #FFD700 !important;
+    }
 
-    @keyframes pulse-strong{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+    #question-id-display {
+      color: #9ca3af !important;
+      font-weight: 600
+    }
+
+    #info-header #question-id-display {
+      color: #9ca3af !important;
+      font-weight: 600 !important
+    }
+
+    main {
+      opacity: 0;
+      transition: opacity .6s ease-in-out
+    }
+
+    main.active {
+      opacity: 1
+    }
+
+    @keyframes pulse-strong {
+      0% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.4)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    /* Classe hidden para ocultar elementos */
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
+
 <body class="text-white">
 
   <!-- Áudios do jogo -->
   <audio id="somAcerto" src="acerto.mp3"></audio>
-  <audio id="somErro"   src="erro.mp3"></audio>
-  <audio id="somFundo"  src="fundo.mp3"></audio>
-  <audio id="somBeep"   src="beep.mp3"></audio>
+  <audio id="somErro" src="erro.mp3"></audio>
+  <audio id="somFundo" src="fundo.mp3"></audio>
+  <audio id="somBeep" src="beep.mp3"></audio>
   <audio id="somTorcida" src="torcida.mp3"></audio>
-  <audio id="somFogos"   src="fogos.mp3"></audio>
+  <audio id="somFogos" src="fogos.mp3"></audio>
+  <audio id="somMilhao" src="milhao.mp3" loop></audio>
 
   <div id="game-container" class="w-full max-w-6xl mx-auto hidden">
     <header class="text-center mb-6 pt-14">
@@ -94,7 +302,8 @@
 
     <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
       <!-- Área principal -->
-      <main class="w-full lg:w-3/4 bg-green-900 bg-opacity-30 p-6 rounded-2xl shadow-2xl transition-opacity duration-300">
+      <main
+        class="w-full lg:w-3/4 bg-green-900 bg-opacity-30 p-6 rounded-2xl shadow-2xl transition-opacity duration-300">
         <div id="info-header" class="flex justify-between items-center mb-4 text-2xl font-bold px-2">
           <span id="question-id-display" class="text-gray-400 text-lg font-mono"></span>
           <span id="prize-value-display" class="text-green-300"></span>
@@ -116,12 +325,15 @@
         <div class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl text-center">
           <h2 class="font-bold mb-3 text-xl">Ajudas</h2>
           <div class="flex justify-around">
-            <button id="help-skip" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Pular</button>
-            <button id="help-eliminate" class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Eliminar 2</button>
+            <button id="help-skip"
+              class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Pular</button>
+            <button id="help-eliminate"
+              class="help-button bg-teal-500 hover:bg-teal-600 p-3 rounded-full font-bold">Eliminar 2</button>
           </div>
         </div>
 
-        <button id="stop-button" class="w-full bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105">PARAR</button>
+        <button id="stop-button"
+          class="w-full bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105">PARAR</button>
 
         <div id="prize-table" class="bg-green-900 bg-opacity-30 p-4 rounded-2xl shadow-2xl flex-grow">
           <h2 class="font-bold mb-3 text-xl text-center">Prêmios</h2>
@@ -139,13 +351,20 @@
       <p id="save-message" class="font-bold mb-4 hidden"></p>
 
       <div id="save-score-container" class="hidden">
-        <input type="text" id="player-name" placeholder="Digite seu nome" class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-black">
-        <button id="save-score-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl text-lg w-full">Salvar Pontuação</button>
+        <input type="text" id="player-name" placeholder="Digite seu nome"
+          class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-black">
+        <button id="save-score-button"
+          class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl text-lg w-full">Salvar
+          Pontuação</button>
       </div>
 
       <div id="end-game-buttons" class="flex flex-col sm:flex-row gap-4 justify-center">
-        <button id="modal-button" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar Novamente</button>
-        <button id="back-to-start-button" class="w-full bg-gray-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela Inicial</button>
+        <button id="modal-button"
+          class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl text-lg">Jogar
+          Novamente</button>
+        <button id="back-to-start-button"
+          class="w-full bg-gray-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl text-lg">Tela
+          Inicial</button>
       </div>
     </div>
   </div>
@@ -158,7 +377,8 @@
 
       <div id="ranking-tabs" class="flex flex-wrap justify-center gap-2 mb-4"></div>
 
-      <div class="grid grid-cols-12 gap-2 items-center text-lg px-2 pb-2 border-b border-gray-700 text-gray-400 font-bold mb-3">
+      <div
+        class="grid grid-cols-12 gap-2 items-center text-lg px-2 pb-2 border-b border-gray-700 text-gray-400 font-bold mb-3">
         <div class="col-span-1 text-center">#</div>
         <div class="col-span-5">Jogador</div>
         <div class="col-span-3">Prêmio</div>
@@ -166,6 +386,22 @@
       </div>
 
       <div id="ranking-list" class="space-y-3 text-left"></div>
+    </div>
+  </div>
+
+  <!-- Modal Conquistas (clone do Ranking) -->
+  <div id="achievements-modal"
+    class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-gray-900 border-2 border-teal-500 p-8 rounded-2xl shadow-2xl text-center max-w-3xl w-full relative">
+      <button id="close-achievements-button" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
+      <h2 class="text-4xl font-black mb-6 bling-gradient">🏆 Conquistas</h2>
+
+      <div id="achievements-progress" class="text-gray-300 font-semibold mb-2">Progresso: 0% (0/20)</div>
+      <div class="w-full bg-gray-700 rounded-full h-3 mb-6">
+        <div id="achievements-progress-bar" class="bg-teal-500 h-3 rounded-full" style="width:0%"></div>
+      </div>
+
+      <div id="achievements-list" class="text-left max-h-96 overflow-y-auto space-y-2"></div>
     </div>
   </div>
 
@@ -179,40 +415,71 @@
       <ul class="list-disc list-inside space-y-2">
         <li>Você tem <span class="font-bold text-yellow-300">45 segundos</span> para responder cada pergunta.</li>
         <li>Se o tempo acabar, o jogo termina!</li>
-        <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
+        <li>Você tem 2 ajudas (1 uso cada): <span class="font-bold text-teal-300">Pular Pergunta</span> e <span
+            class="font-bold text-teal-300">Eliminar 2 Alternativas</span>.</li>
       </ul>
     </div>
 
     <div class="bg-green-900 bg-opacity-30 p-6 rounded-2xl max-w-2xl mx-auto mb-8 text-left text-gray-200">
       <h2 class="text-2xl font-bold text-center mb-4 text-white">Escolha os Assuntos</h2>
       <div id="subject-selection" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
-      <p id="subject-warning" class="text-red-400 text-center mt-4 hidden">Selecione pelo menos um assunto para começar!</p>
+      <p id="subject-warning" class="text-red-400 text-center mt-4 hidden">Selecione pelo menos um assunto para começar!
+      </p>
     </div>
 
     <div class="flex flex-col items-center gap-4">
       <div class="flex justify-center gap-4">
-        <button id="start-button" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110" disabled>Começar!</button>
-        <button id="ranking-button" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
+        <button id="start-button"
+          class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110"
+          disabled>Começar!</button>
+        <button id="ranking-button"
+          class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">Ranking</button>
+        <!-- Botão Conquistas com MESMAS classes do ranking -->
+        <button id="achievements-button"
+          class="bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 px-10 rounded-2xl text-2xl uppercase transition-transform transform hover:scale-110">🏆
+          Conquistas</button>
       </div>
       <p id="loading-status" class="text-yellow-400 mt-4">Carregando perguntas do banco de dados...</p>
     </div>
 
     <footer class="mt-12 text-gray-500 text-sm">
-      <p>v2.2 - Sons, Mensagens Engraçadas e Perguntas Recondicionadas</p>
-      <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
+      <p>v2.3 - Sistema de Conquistas, Transições Suaves e Melhorias Visuais</p>
+      <p>Desenvolvido por <a href="https://github.com/isaacmarquetti" target="_blank" rel="noopener noreferrer"
+          class="text-teal-400 hover:underline">Isaac Marquetti</a></p>
     </footer>
   </div>
 
   <script type="module">
     // ===== Controlador de Áudio =====
     class AudioController {
-      get acerto(){return document.getElementById("somAcerto");}
-      get erro(){return document.getElementById("somErro");}
-      get fundo(){return document.getElementById("somFundo");}
-      playCorrect(){const a=this.acerto; if(a){try{a.volume=.1;a.currentTime=0;a.play().catch(()=>{});}catch(e){}}}
-      playIncorrect(){const e=this.erro; if(e){try{e.volume=.1;e.currentTime=0;e.play().catch(()=>{});}catch(err){}}}
-      startBackground(){const f=this.fundo;if(f){f.pause();f.currentTime=0;f.volume=.05;f.play().then(()=>{}).catch(err=>{console.log("Autoplay bloqueado (clique exigido)",err);});}}
-      stopBackground(){const f=this.fundo;if(f){f.pause();f.currentTime=0;}}
+      get acerto() { return document.getElementById("somAcerto"); }
+      get erro() { return document.getElementById("somErro"); }
+      get fundo() { return document.getElementById("somFundo"); }
+      get milhao() { return document.getElementById("somMilhao"); }
+      get fogos() { return document.getElementById("somFogos"); }
+      get torcida() { return document.getElementById("somTorcida"); }
+      playCorrect() { const a = this.acerto; if (a) { try { a.volume = .1; a.currentTime = 0; a.play().catch(() => { }); } catch (e) { } } }
+      playIncorrect() { const e = this.erro; if (e) { try { e.volume = .1; e.currentTime = 0; e.play().catch(() => { }); } catch (err) { } } }
+      playMillion() {
+        const m = this.milhao;
+        if (m) {
+          try {
+            m.volume = .4;
+            m.currentTime = 0;
+            m.loop = true;
+            m.play().catch(() => { });
+          } catch (e) { }
+        }
+      }
+      startBackground() { const f = this.fundo; if (f) { f.pause(); f.currentTime = 0; f.volume = .05; f.play().then(() => { }).catch(err => { console.log("Autoplay bloqueado (clique exigido)", err); }); } }
+      stopBackground() { const f = this.fundo; if (f) { f.pause(); f.currentTime = 0; } }
+      stopAllSounds() {
+        this.stopBackground();
+        if (this.fogos) { this.fogos.pause(); this.fogos.currentTime = 0; }
+        if (this.torcida) { this.torcida.pause(); this.torcida.currentTime = 0; }
+        if (this.milhao) { this.milhao.pause(); this.milhao.currentTime = 0; }
+        console.log('Todos os sons foram parados');
+      }
     }
     window.audioCtl = new AudioController();
 
@@ -269,26 +536,33 @@
 
       // ==== PRÊMIOS (16 níveis com acertar/parar/errar) ====
       const prizeLevels = [
-        { acertar: 1000,    parar: 0,       errar: 0,       difficulty: 'easy' },   // 1
-        { acertar: 2000,    parar: 1000,    errar: 500,     difficulty: 'easy' },   // 2
-        { acertar: 3000,    parar: 2000,    errar: 1000,    difficulty: 'easy' },   // 3
-        { acertar: 4000,    parar: 3000,    errar: 1500,    difficulty: 'easy' },   // 4
-        { acertar: 5000,    parar: 4000,    errar: 2000,    difficulty: 'easy' },   // 5
-        { acertar: 10000,   parar: 5000,    errar: 2500,    difficulty: 'medium' }, // 6
-        { acertar: 20000,   parar: 10000,   errar: 5000,    difficulty: 'medium' }, // 7
-        { acertar: 30000,   parar: 20000,   errar: 10000,   difficulty: 'medium' }, // 8
-        { acertar: 40000,   parar: 30000,   errar: 15000,   difficulty: 'medium' }, // 9
-        { acertar: 50000,   parar: 40000,   errar: 20000,   difficulty: 'medium' }, // 10
-        { acertar: 100000,  parar: 50000,   errar: 25000,   difficulty: 'hard' },   // 11
-        { acertar: 200000,  parar: 100000,  errar: 50000,   difficulty: 'hard' },   // 12
-        { acertar: 300000,  parar: 200000,  errar: 100000,  difficulty: 'hard' },   // 13
-        { acertar: 400000,  parar: 300000,  errar: 150000,  difficulty: 'hard' },   // 14
-        { acertar: 500000,  parar: 400000,  errar: 200000,  difficulty: 'hard' },   // 15
-        { acertar: 1000000, parar: 500000,  errar: 0,       difficulty: 'hard' }    // 16
+        { acertar: 1000, parar: 0, errar: 0, difficulty: 'easy' },   // 1
+        { acertar: 2000, parar: 1000, errar: 500, difficulty: 'easy' },   // 2
+        { acertar: 3000, parar: 2000, errar: 1000, difficulty: 'easy' },   // 3
+        { acertar: 4000, parar: 3000, errar: 1500, difficulty: 'easy' },   // 4
+        { acertar: 5000, parar: 4000, errar: 2000, difficulty: 'easy' },   // 5
+        { acertar: 10000, parar: 5000, errar: 2500, difficulty: 'medium' }, // 6
+        { acertar: 20000, parar: 10000, errar: 5000, difficulty: 'medium' }, // 7
+        { acertar: 30000, parar: 20000, errar: 10000, difficulty: 'medium' }, // 8
+        { acertar: 40000, parar: 30000, errar: 15000, difficulty: 'medium' }, // 9
+        { acertar: 50000, parar: 40000, errar: 20000, difficulty: 'medium' }, // 10
+        { acertar: 100000, parar: 50000, errar: 25000, difficulty: 'hard' },   // 11
+        { acertar: 200000, parar: 100000, errar: 50000, difficulty: 'hard' },   // 12
+        { acertar: 300000, parar: 200000, errar: 100000, difficulty: 'hard' },   // 13
+        { acertar: 400000, parar: 300000, errar: 150000, difficulty: 'hard' },   // 14
+        { acertar: 500000, parar: 400000, errar: 200000, difficulty: 'hard' },   // 15
+        { acertar: 1000000, parar: 500000, errar: 0, difficulty: 'hard' }    // 16
       ];
 
       // ==== Mensagens engraçadas (quando ERRA) ====
       function getFunnyErrorMessage(prize) {
+
+        // Verificar primeiro se é a pergunta de milhão (especial)
+        if (prize === 1000000 || (prize === 0 && currentQuestionIndex === 15)) {
+          return "💰💸 Quase que você vira um milionário de mentira! 💰💸<br>💸💸💸<br>Vamos lá, não pode desistir, quase que você chegou lá! 💪✨";
+        }
+
+        // Condições normais
         if (prize === 0) {
           return "😬 Desta vez não rolou, mas valeu pela participação!";
         } else if (prize < 15000) {
@@ -302,13 +576,14 @@
         }
       }
 
-      
+
       // ==== Mensagens engraçadas (quando PARAR) ====
       function getFunnyPararMessage(prize) {
         if (prize === 0) {
           return "😅 Você preferiu não arriscar e saiu sem nada... mas valeu a coragem!";
         } else if (prize <= 10000) {
           return "💸 Saiu cedo do jogo, mas já garantiu uns trocados... de mentira, claro.";
+
         } else if (prize <= 100000) {
           return "🤔 Jogou com cautela, e garantiu uma boa grana fictícia!";
         } else if (prize <= 500000) {
@@ -339,19 +614,19 @@
 
             const transformedQuestion = {
               question: data.Pergunta,
-              options: [ data['Alternativa A'], data['Alternativa B'], data['Alternativa C'], data['Alternativa D'] ],
-              correctIndex: ['A','B','C','D'].indexOf(data['Resposta Correta']),
+              options: [data['Alternativa A'], data['Alternativa B'], data['Alternativa C'], data['Alternativa D']],
+              correctIndex: ['A', 'B', 'C', 'D'].indexOf(data['Resposta Correta']),
               ID: data.ID,
               subject: data.Assunto
             };
 
             if (transformedQuestion.correctIndex === -1) return;
-            if (difficulty === 'fácil')      allQuestions.easy.push(transformedQuestion);
+            if (difficulty === 'fácil') allQuestions.easy.push(transformedQuestion);
             else if (difficulty === 'médio') allQuestions.medium.push(transformedQuestion);
             else if (difficulty === 'difícil') allQuestions.hard.push(transformedQuestion);
           });
 
-          if (allQuestions.easy.length===0 && allQuestions.medium.length===0 && allQuestions.hard.length===0) {
+          if (allQuestions.easy.length === 0 && allQuestions.medium.length === 0 && allQuestions.hard.length === 0) {
             loadingStatus.textContent = "Nenhuma pergunta encontrada no banco de dados!";
             loadingStatus.classList.remove("hidden");
             loadingStatus.classList.add("text-red-500");
@@ -374,8 +649,8 @@
       function getRankingFromLocalStorage(category) {
         const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
         const filtered = allScores.filter(s => s.category === category);
-        filtered.sort((a,b) => (b.prize!==a.prize) ? (b.prize-a.prize) : (a.time-b.time));
-        return filtered.slice(0,5);
+        filtered.sort((a, b) => (b.prize !== a.prize) ? (b.prize - a.prize) : (a.time - b.time));
+        return filtered.slice(0, 5);
       }
       function saveRankingToLocalStorage(newScore) {
         const allScores = JSON.parse(localStorage.getItem('blingaoRanking') || '[]');
@@ -394,8 +669,8 @@
 
         const subjectOptions = subjects.map(subject => `
           <div>
-            <input type="checkbox" id="${subject.replace(/\\s+/g,'-')}" value="${subject}" class="hidden subject-checkbox subject-item">
-            <label for="${subject.replace(/\\s+/g,'-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
+            <input type="checkbox" id="${subject.replace(/\s+/g, '-')}" value="${subject}" class="hidden subject-checkbox subject-item">
+            <label for="${subject.replace(/\s+/g, '-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
           </div>`);
 
         subjectSelectionContainer.innerHTML = `
@@ -415,39 +690,39 @@
         subjectCheckboxes.forEach(cb => {
           cb.addEventListener('change', () => {
             if (!cb.checked) selectAllCheckbox.checked = false;
-            else if ([...subjectCheckboxes].every(c=>c.checked)) selectAllCheckbox.checked = true;
+            else if ([...subjectCheckboxes].every(c => c.checked)) selectAllCheckbox.checked = true;
           });
         });
       }
 
-      function setupRankingTabs(){
+      function setupRankingTabs() {
         const categories = ['Geral', ...subjects];
         rankingTabsContainer.innerHTML = categories.map(cat => {
-          const text = (cat!=='Geral') ? cat.replace('Módulo ','Módulo<br>') : 'Todos os<br>Assuntos';
+          const text = (cat !== 'Geral') ? cat.replace('Módulo ', 'Módulo<br>') : 'Todos os<br>Assuntos';
           return `<button class="ranking-tab w-32 px-4 py-2 rounded-md bg-gray-700 hover:bg-teal-600 transition text-center flex items-center justify-center h-16" data-category="${cat}">${text}</button>`;
         }).join('');
-        rankingTabsContainer.addEventListener('click', (e)=>{
+        rankingTabsContainer.addEventListener('click', (e) => {
           const btn = e.target.closest('.ranking-tab');
-          if (btn){ displayRanking(btn.dataset.category); }
+          if (btn) { displayRanking(btn.dataset.category); }
         });
       }
 
-      function displayRanking(category='Geral'){
+      function displayRanking(category = 'Geral') {
         rankingModal.classList.remove('hidden');
         rankingList.innerHTML = '<p class="text-gray-400 text-center">Carregando ranking...</p>';
-        document.querySelectorAll('.ranking-tab').forEach(tab=>tab.classList.remove('active'));
+        document.querySelectorAll('.ranking-tab').forEach(tab => tab.classList.remove('active'));
         const active = document.querySelector(`.ranking-tab[data-category="${category}"]`);
         if (active) active.classList.add('active');
         const r = getRankingFromLocalStorage(category);
-        rankingList.innerHTML='';
-        if (r.length===0){ rankingList.innerHTML='<p class="text-gray-400 text-center">Nenhuma pontuação registrada ainda. Seja o primeiro!</p>'; return; }
-        r.forEach((s,i)=>{
-          const rankClass = `rank-${i+1}`;
-          const timeFormatted = new Date(s.time*1000).toISOString().substr(14,5);
+        rankingList.innerHTML = '';
+        if (r.length === 0) { rankingList.innerHTML = '<p class="text-gray-400 text-center">Nenhuma pontuação registrada ainda. Seja o primeiro!</p>'; return; }
+        r.forEach((s, i) => {
+          const rankClass = `rank-${i + 1}`;
+          const timeFormatted = new Date(s.time * 1000).toISOString().substr(14, 5);
           const el = document.createElement('div');
-          el.className='grid grid-cols-12 gap-2 items-center text-lg p-2 rounded-lg bg-gray-800';
+          el.className = 'grid grid-cols-12 gap-2 items-center text-lg p-2 rounded-lg bg-gray-800';
           el.innerHTML = `
-            <div class="col-span-1 text-center font-black text-2xl ${rankClass}">${i+1}</div>
+            <div class="col-span-1 text-center font-black text-2xl ${rankClass}">${i + 1}</div>
             <div class="col-span-5 font-bold">${s.name}</div>
             <div class="col-span-3 text-green-400 font-bold">R$ ${s.prize.toLocaleString('pt-BR')}</div>
             <div class="col-span-3 text-right text-gray-400">${timeFormatted}</div>`;
@@ -458,17 +733,17 @@
       // ==== Áudio adicional ====
       async function initAudio() {
         if (audioReady || typeof Tone === 'undefined') return;
-        try { await Tone.start(); synth = new Tone.Synth().toDestination(); audioReady = true; } catch(e){ console.error("Não foi possível iniciar áudio.", e); }
+        try { await Tone.start(); synth = new Tone.Synth().toDestination(); audioReady = true; } catch (e) { console.error("Não foi possível iniciar áudio.", e); }
       }
-      function playSound(type){
+      function playSound(type) {
         if (!synth) return;
-        if (type==='correct'){ synth.triggerAttackRelease("C5","8n",Tone.now()); synth.triggerAttackRelease("G5","8n",Tone.now()+0.2); }
-        else if (type==='incorrect'){ synth.triggerAttackRelease("F#3","4n",Tone.now()); }
+        if (type === 'correct') { synth.triggerAttackRelease("C5", "8n", Tone.now()); synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2); }
+        else if (type === 'incorrect') { synth.triggerAttackRelease("F#3", "4n", Tone.now()); }
       }
 
       // ==== Util ====
-      function shuffleArray(array){
-        for (let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]]; }
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; }
       }
 
       // ==== Prêmios (UI) ====
@@ -488,34 +763,34 @@
         });
       }
       function updatePrizeTable() {
-        document.querySelectorAll('#prize-list li').forEach(li => li.classList.remove('bg-green-400','text-black','scale-110'));
+        document.querySelectorAll('#prize-list li').forEach(li => li.classList.remove('bg-green-400', 'text-black', 'scale-110'));
         if (currentQuestionIndex < prizeLevels.length) {
           const el = document.querySelector(`#prize-list li[data-level='${currentQuestionIndex}']`);
-          if (el) el.classList.add('bg-green-400','text-black','scale-110');
+          if (el) el.classList.add('bg-green-400', 'text-black', 'scale-110');
         }
       }
 
       function updateTimer() {
         timeLeft--;
         timerDisplay.textContent = timeLeft;
-        timerDisplay.classList.remove('low-time','critical-time');
+        timerDisplay.classList.remove('low-time', 'critical-time');
         if (timeLeft <= 10 && timeLeft > 5) timerDisplay.classList.add('low-time');
         else if (timeLeft <= 5) {
           timerDisplay.classList.add('critical-time');
-          const beep = document.getElementById('somBeep'); if (beep){ try{ beep.currentTime=0; beep.play().catch(()=>{});}catch(e){} }
+          const beep = document.getElementById('somBeep'); if (beep) { try { beep.currentTime = 0; beep.play().catch(() => { }); } catch (e) { } }
         }
         if (timeLeft <= 0) { clearInterval(timerInterval); timeUp(); }
       }
 
       function timeUp() {
-        window.audioCtl.stopBackground();
+        window.audioCtl.stopAllSounds();
         if (!gameActive) return;
         gameActive = false;
         window.audioCtl.playIncorrect();
         const finalPrize = prizeLevels[currentQuestionIndex]?.errar || 0;
         const title = "Tempo Esgotado!";
         const funny = getFunnyErrorMessage(finalPrize);
-        const text = (finalPrize>0)
+        const text = (finalPrize > 0)
           ? `O tempo acabou.<br>Você leva: <strong class="text-2xl font-bold">R$ ${finalPrize.toLocaleString('pt-BR')}</strong><br><br>${funny}`
           : `O tempo acabou.<br>${funny}`;
         endGame(false, title, text, finalPrize);
@@ -524,9 +799,9 @@
       function getQuestionByDifficulty() {
         if (currentQuestionIndex >= prizeLevels.length) return null;
         const difficulty = prizeLevels[currentQuestionIndex].difficulty;
-        const pool = gameQuestions[difficulty].filter((_,i)=>!usedQuestionIndices[difficulty].has(i));
-        if (pool.length===0) { console.warn("Sem perguntas para:", difficulty); return null; }
-        const idx = Math.floor(Math.random()*pool.length);
+        const pool = gameQuestions[difficulty].filter((_, i) => !usedQuestionIndices[difficulty].has(i));
+        if (pool.length === 0) { console.warn("Sem perguntas para:", difficulty); return null; }
+        const idx = Math.floor(Math.random() * pool.length);
         const chosen = pool[idx];
         const originalIndex = gameQuestions[difficulty].indexOf(chosen);
         usedQuestionIndices[difficulty].add(originalIndex);
@@ -536,7 +811,7 @@
       function loadQuestion() {
         window.audioCtl.stopBackground();
         if (currentQuestionIndex >= prizeLevels.length) {
-          const finalPrize = prizeLevels[prizeLevels.length-1].acertar;
+          const finalPrize = prizeLevels[prizeLevels.length - 1].acertar;
           const title = "PARABÉNS!";
           const text = `Você ganhou um milhão!<br>Porém são fictícios. 😢<br><br>Mas veja pelo lado positivo:<br>Você zerou o jogo e provou que entende tudo de Bling!`;
           endGame(true, title, text, finalPrize, true);
@@ -558,10 +833,41 @@
         questionText.textContent = q.question;
         answersContainer.innerHTML = '';
 
+        // Verificar se é a pergunta de milhão e aplicar estilo especial
+        const isMillionQuestion = currentPrize === 1000000;
+        const mainContainer = document.querySelector('main');
+
+        if (isMillionQuestion) {
+          // Aplicar classe especial para pergunta de milhão
+          mainContainer.classList.add('million-question');
+          questionText.classList.add('question-text');
+          prizeValueDisplay.classList.add('prize-value');
+
+          // Parar som de fundo e tocar som de tic-tac em loop
+          window.audioCtl.stopBackground();
+          window.audioCtl.playMillion();
+          console.log('Tocando som de tic-tac em loop para pergunta de milhão!');
+        } else {
+          // Remover classe especial se não for pergunta de milhão
+          mainContainer.classList.remove('million-question');
+          questionText.classList.remove('question-text');
+          prizeValueDisplay.classList.remove('prize-value');
+
+          // Parar som de milhão e voltar com som de fundo
+          const somMilhao = document.getElementById('somMilhao');
+          if (somMilhao) {
+            somMilhao.pause();
+            somMilhao.currentTime = 0;
+          }
+          window.audioCtl.startBackground();
+        }
+
         q.options.forEach((opt, idx) => {
           const btn = document.createElement('button');
           btn.className = 'answer-option bg-green-800 bg-opacity-50 text-left p-4 rounded-lg shadow-md';
-          btn.innerHTML = `<span class="font-bold mr-2">${String.fromCharCode(97+idx)})</span> ${opt}`;
+          // Adicionar indicador visual na resposta correta para testes
+          const correctIndicator = '';
+          btn.innerHTML = `<span class="font-bold mr-2">${String.fromCharCode(97 + idx)})</span> ${opt}${correctIndicator}`;
           btn.dataset.index = idx;
           btn.onclick = () => selectAnswer(btn, q.correctIndex, q.ID);
           answersContainer.appendChild(btn);
@@ -572,45 +878,100 @@
         clearInterval(timerInterval);
         timeLeft = 45;
         timerDisplay.textContent = timeLeft;
-        timerDisplay.classList.remove('low-time','critical-time','text-yellow-300');
+        timerDisplay.classList.remove('low-time', 'critical-time', 'text-yellow-300');
         timerInterval = setInterval(updateTimer, 1000);
-        window.audioCtl.startBackground();
+
+        // Só iniciar som de fundo se NÃO for pergunta de milhão
+        if (currentPrize !== 1000000) {
+          window.audioCtl.startBackground();
+        }
+
+        // Mark question start time and reset per-question help flags
+        if (!window._ach) window._ach = {};
+        window._ach.questionShownAt = Date.now();
+        window._ach.usedSkipThisQ = false;
+        window._ach.usedEliminateThisQ = false;
       }
 
       function selectAnswer(selectedButton, correctIndex, questionID) {
-        window.audioCtl.stopBackground();
+        window.audioCtl.stopAllSounds();
         if (!gameActive) return;
         gameActive = false;
         clearInterval(timerInterval);
+
+        // A dificuldade deve ser definida baseada no índice atual da pergunta
+        let difficulty = 'easy';
+        if (currentQuestionIndex >= 10) {
+          difficulty = 'hard';
+        } else if (currentQuestionIndex >= 5) {
+          difficulty = 'medium';
+        }
+        window._ach.currentDifficulty = difficulty;
 
         const selectedIndex = parseInt(selectedButton.dataset.index);
         const buttons = answersContainer.querySelectorAll('button');
         const correctButton = buttons[correctIndex];
 
         if (selectedIndex === correctIndex) {
-          window.audioCtl.playCorrect(); /* synth opcional */ 
+          window.audioCtl.playCorrect(); /* synth opcional */
           selectedButton.classList.add('correct');
+
+          // === Achievements on correct ===
+          try {
+            const elapsed = (Date.now() - (window._ach?.questionShownAt || Date.now())) / 1000;
+            // Fast streak (<3s each)
+            if (elapsed < 3) { window._ach.fastStreak = (window._ach.fastStreak || 0) + 1; } else { window._ach.fastStreak = 0; }
+            if (window._ach.fastStreak >= 10 && window.unlockAchievement) unlockAchievement('cirurgiao');
+
+            // Million question correct in <5s
+            const isMillionQ = (prizeLevels[currentQuestionIndex]?.acertar === 1000000);
+            if (isMillionQ && elapsed < 5 && window.unlockAchievement) {
+              unlockAchievement('coracao');
+            }
+          } catch (e) { };
+
+          // Sem Pressa: responder faltando menos de 5 segundos
+          try {
+            const timeLeft = parseInt(document.getElementById('timer').textContent) || 0;
+            if (timeLeft <= 5 && timeLeft > 0 && window.unlockAchievement) unlockAchievement('sempressa');
+          } catch (e) { };
           const mainEl = document.querySelector('main');
-          setTimeout(()=>{
+          setTimeout(() => {
             mainEl.classList.add('is-transitioning');
-            setTimeout(()=>{
+            setTimeout(() => {
               score = prizeLevels[currentQuestionIndex].acertar;
               currentQuestionIndex++;
               const m = document.querySelector('main');
               m.classList.remove('active');
-              setTimeout(()=>{ loadQuestion(); m.classList.add('active'); }, 100);
+              setTimeout(() => { loadQuestion(); m.classList.add('active'); }, 100);
               mainEl.classList.remove('is-transitioning');
             }, 400);
           }, 1000);
         } else {
           window.audioCtl.playIncorrect();
           selectedButton.classList.add('incorrect');
+
+          // === Achievements on wrong ===
+          try {
+            const finalPrize = prizeLevels[currentQuestionIndex].errar || 0;
+            // First question wrong counting (Azarado)
+            if (currentQuestionIndex === 0) {
+              let n = parseInt(localStorage.getItem('blingao_meta_firstQ') || '0', 10) || 0;
+              n += 1;
+              localStorage.setItem('blingao_meta_firstQ', String(n));
+              if (n >= 5 && window.unlockAchievement) unlockAchievement('azarado');
+            }
+            // Colecionador de Trocados (< R$5.000)
+            if (finalPrize < 5000 && window.unlockAchievement) unlockAchievement('trocados');
+            // Reset streaks
+            if (window._ach) { window._ach.fastStreak = 0; window._ach.hardStreak = 0; }
+          } catch (e) { };
           if (correctButton) correctButton.classList.add('correct');
-          setTimeout(()=>{
+          setTimeout(() => {
             const finalPrize = prizeLevels[currentQuestionIndex].errar;
             const title = "Que pena, você errou!";
             const funny = getFunnyErrorMessage(finalPrize);
-            const text = (finalPrize>=0)
+            const text = (finalPrize >= 0)
               ? `Você ganhou:<br><strong class="text-2xl font-bold">R$ ${finalPrize.toLocaleString('pt-BR')}</strong><br><br>${funny}`
               : "Desta vez não foi, mas agradecemos a sua participação!";
             endGame(false, title, text, finalPrize);
@@ -618,16 +979,81 @@
         }
       }
 
-      function getCurrentPararPrize(){
+      function getCurrentPararPrize() {
         return prizeLevels[currentQuestionIndex]?.parar ?? 0;
       }
 
       // Centraliza o fim de jogo + ranking
-      function endGame(isWinner, title, text, finalPrize, isMillionaire=false) {
+      function endGame(isWinner, title, text, finalPrize, isMillionaire = false) {
         gameActive = false;
         clearInterval(timerInterval);
-        const totalTime = (Date.now()-gameStartTime)/1000;
+        const totalTime = (Date.now() - gameStartTime) / 1000;
+
+        // Tocar sons de fogos e torcida quando atinge o milhão
+        if (isMillionaire) {
+          try {
+            const somFogos = document.getElementById('somFogos');
+            const somTorcida = document.getElementById('somTorcida');
+            if (somFogos) {
+              somFogos.volume = 0.3;
+              somFogos.currentTime = 0;
+              somFogos.play().catch(() => { });
+              console.log('Tocando som de fogos!');
+            }
+            if (somTorcida) {
+              somTorcida.volume = 0.2;
+              somTorcida.currentTime = 0;
+              somTorcida.play().catch(() => { });
+              console.log('Tocando som de torcida!');
+            }
+          } catch (e) {
+            console.log('Erro ao tocar sons:', e);
+          }
+        }
+
+        try {
+          // Maratonista: contar partidas completas
+          let gp = parseInt(localStorage.getItem('blingao_meta_games') || '0', 10) || 0;
+          gp += 1;
+          localStorage.setItem('blingao_meta_games', String(gp));
+          if (gp >= 50 && window.unlockAchievement) {
+            unlockAchievement('maratonista');
+          }
+
+          // Milão, Tá Bom: parar na segunda pergunta levando apenas R$1.000
+          if (finalPrize === 1000 && currentQuestionIndex === 1 && window.unlockAchievement) unlockAchievement('milao');
+
+          if (finalPrize === 1000000) {
+            if (window.unlockAchievement) unlockAchievement('milionario');
+
+            // Categoria por módulo
+            const cat = (currentGameCategory || '') + '';
+            if (cat.includes('Fiscal')) unlockAchievement('fiscal');
+            if (cat.includes('Integrações')) unlockAchievement('integracoes');
+            if (cat.includes('Atendimento')) unlockAchievement('atendimento');
+            if (cat.includes('Outros')) unlockAchievement('outros');
+
+            // Faz-Tudo: todos os módulos (modo 'Geral')
+            if (cat === 'Geral') unlockAchievement('faztudo');
+
+            // Sem Rodinhas: sem ajudas na partida
+            if (!window._ach?.helpsUsedOverall) unlockAchievement('semrodinhas');
+
+            // Velocista: <= 90s
+            if (totalTime <= 90) unlockAchievement('velocista');
+
+            // Enciclopédia Viva: 1M em todos os módulos (quando 4 categorias estiverem desbloqueadas)
+            try {
+              const unlocked = JSON.parse(localStorage.getItem('blingao_achievements') || "{}");
+              const cats = ['fiscal', 'integracoes', 'atendimento', 'outros'];
+              if (cats.every(k => unlocked[k])) unlockAchievement('enciclopedia');
+            } catch (e) { }
+          }
+        } catch (e) { };
+
+        // Verificar se a pontuação é elegível para o ranking
         checkAndSaveScore(finalPrize, totalTime);
+
         showModal(title, text, isMillionaire);
       }
 
@@ -637,39 +1063,52 @@
         const currentPrize = getCurrentPararPrize();
         const title = "Você Parou!";
         const funny = getFunnyPararMessage(currentPrize);
-        const text = (currentPrize>0)
+        const text = (currentPrize > 0)
           ? `Você decidiu parar com: <br><strong class="text-2xl font-bold">R$ ${currentPrize.toLocaleString('pt-BR')}</strong><br><br>${funny}`
           : funny;
+        // Para a conquista Milão, usar o valor parar (que é o que o jogador realmente leva)
         endGame(false, title, text, currentPrize);
       }
 
-      function showModal(title, text, isWinner=false){
+      function showModal(title, text, isWinner = false) {
         const modalContent = modal.querySelector('.modal-content');
         modalTitle.textContent = title;
         modalText.innerHTML = text;
-        if (isWinner){ modal.classList.add('winner-modal'); modalContent.classList.remove('bg-white','text-gray-800'); }
-        else { modal.classList.remove('winner-modal'); modalContent.classList.add('bg-white','text-gray-800'); }
+        if (isWinner) { modal.classList.add('winner-modal'); modalContent.classList.remove('bg-white', 'text-gray-800'); }
+        else { modal.classList.remove('winner-modal'); modalContent.classList.add('bg-white', 'text-gray-800'); }
         modal.classList.remove('hidden');
         gameContainer.classList.add('hidden');
       }
 
-      function backToStartScreen(){
-        window.audioCtl.stopBackground();
+      function backToStartScreen() {
+        window.audioCtl.stopAllSounds();
         modal.classList.add('hidden');
         gameContainer.classList.add('hidden');
         startScreen.classList.remove('hidden');
       }
 
-      function resetGame(){
-        window.audioCtl.stopBackground();
+      function resetGame() {
+        window.audioCtl.stopAllSounds();
         clearInterval(timerInterval);
         currentQuestionIndex = 0;
         score = 0;
-        helps = { skip:1, eliminate:1 };
-        usedQuestionIndices = { easy:new Set(), medium:new Set(), hard:new Set() };
+        helps = { skip: 1, eliminate: 1 };
+        usedQuestionIndices = { easy: new Set(), medium: new Set(), hard: new Set() };
         Object.values(gameQuestions).forEach(shuffleArray);
         gameActive = true;
         gameStartTime = Date.now();
+
+        // Init achievement runtime state
+        const oldQuestionShownAt = window._ach?.questionShownAt;
+        window._ach = {
+          helpsUsedOverall: false,
+          usedSkipThisQ: false,
+          usedEliminateThisQ: false,
+          hardStreak: 0,
+          fastStreak: 0,
+          firstQErrors: (parseInt(localStorage.getItem('blingao_meta_firstQ') || '0', 10) || 0),
+          questionShownAt: oldQuestionShownAt
+        };
         helpSkipBtn.classList.remove('disabled');
         helpEliminateBtn.classList.remove('disabled');
         modal.classList.add('hidden');
@@ -677,24 +1116,45 @@
         startScreen.classList.add('hidden');
         const m = document.querySelector('main');
         m.classList.remove('active');
-        setTimeout(()=>{ loadQuestion(); m.classList.add('active'); }, 100);
+        setTimeout(() => { loadQuestion(); m.classList.add('active'); }, 100);
       }
 
       // Ranking
-      function checkAndSaveScore(prize, time){
-        if (prize<=0 || !currentGameCategory){
+      function checkAndSaveScore(prize, time) {
+
+        if (prize <= 0 || !currentGameCategory) {
           saveScoreContainer.classList.add('hidden');
           endGameButtons.classList.remove('hidden');
-          if (prize>0){
-            saveMessage.textContent="Pontuação não elegível para este ranking (jogue com 1 assunto ou com todos).";
-            saveMessage.className='font-bold mb-4 text-yellow-600';
+          if (prize > 0) {
+            saveMessage.textContent = "Pontuação não elegível para este ranking (jogue com 1 assunto ou com todos).";
+            saveMessage.className = 'font-bold mb-4 text-yellow-600';
             saveMessage.classList.remove('hidden');
           }
           return;
         }
+
+        // Verificar se é pergunta de milhão (especial)
+        if (prize === 1000000) {
+          // Para R$1.000.000 (vitória), sempre mostrar modal de salvamento
+          saveScoreContainer.classList.remove('hidden');
+          endGameButtons.classList.add('hidden');
+          finalScoreForRanking = prize;
+          totalTimeForRanking = time;
+          playerNameInput.value = localStorage.getItem('blingaoLastPlayer') || '';
+          return;
+        }
+
+        // Se errou a pergunta de milhão (prize = 0 e currentQuestionIndex = 15), não mostrar salvamento
+        if (prize === 0 && currentQuestionIndex === 15) {
+          saveScoreContainer.classList.add('hidden');
+          endGameButtons.classList.remove('hidden');
+          return;
+        }
+
+        // Para outras pontuações, verificar se é elegível para ranking
         const ranking = getRankingFromLocalStorage(currentGameCategory);
-        const worst = ranking.length<5 ? 0 : (ranking[ranking.length-1]?.prize||0);
-        if (ranking.length<5 || prize>worst){
+        const worst = ranking.length < 5 ? 0 : (ranking[ranking.length - 1]?.prize || 0);
+        if (ranking.length < 5 || prize > worst) {
           saveScoreContainer.classList.remove('hidden');
           endGameButtons.classList.add('hidden');
           finalScoreForRanking = prize;
@@ -705,32 +1165,32 @@
           endGameButtons.classList.remove('hidden');
         }
       }
-      function saveScore(){
+      function saveScore() {
         const name = playerNameInput.value.trim();
-        if (!name){ playerNameInput.focus(); return; }
+        if (!name) { playerNameInput.focus(); return; }
         localStorage.setItem('blingaoLastPlayer', name);
-        const newScore = { name, prize:finalScoreForRanking, time:totalTimeForRanking, date:new Date().toISOString(), category:currentGameCategory };
+        const newScore = { name, prize: finalScoreForRanking, time: totalTimeForRanking, date: new Date().toISOString(), category: currentGameCategory };
         const ok = saveRankingToLocalStorage(newScore);
-        if (ok){ saveMessage.textContent="Pontuação salva com sucesso!"; saveMessage.className='font-bold mb-4 text-green-600'; }
-        else { saveMessage.textContent="Erro ao salvar. Tente novamente."; saveMessage.className='font-bold mb-4 text-red-600'; }
+        if (ok) { saveMessage.textContent = "Pontuação salva com sucesso!"; saveMessage.className = 'font-bold mb-4 text-green-600'; }
+        else { saveMessage.textContent = "Erro ao salvar. Tente novamente."; saveMessage.className = 'font-bold mb-4 text-red-600'; }
         saveMessage.classList.remove('hidden');
         saveScoreContainer.classList.add('hidden');
         endGameButtons.classList.remove('hidden');
-        playerNameInput.value='';
+        playerNameInput.value = '';
       }
 
-      function setupRankingTabsShim(){ 
+      function setupRankingTabsShim() {
         const categories = ['Geral', ...subjects];
         rankingTabsContainer.innerHTML = categories.map(cat => {
-          const text = (cat!=='Geral') ? cat.replace('Módulo ','Módulo<br>') : 'Todos os<br>Assuntos';
+          const text = (cat !== 'Geral') ? cat.replace('Módulo ', 'Módulo<br>') : 'Todos os<br>Assuntos';
           return `<button class="ranking-tab w-32 px-4 py-2 rounded-md bg-gray-700 hover:bg-teal-600 transition text-center flex items-center justify-center h-16" data-category="${cat}">${text}</button>`;
         }).join('');
-        rankingTabsContainer.addEventListener('click', (e)=>{
+        rankingTabsContainer.addEventListener('click', (e) => {
           const btn = e.target.closest('.ranking-tab');
-          if (btn){ displayRanking(btn.dataset.category); }
+          if (btn) { displayRanking(btn.dataset.category); }
         });
       }
-      function setupSubjectSelectionShim(){ 
+      function setupSubjectSelectionShim() {
         const allSubjectsOption = `
           <div class="sm:col-span-1">
             <input type="checkbox" id="select-all" class="hidden subject-checkbox">
@@ -739,8 +1199,8 @@
 
         const subjectOptions = subjects.map(subject => `
           <div>
-            <input type="checkbox" id="${subject.replace(/\\s+/g,'-')}" value="${subject}" class="hidden subject-checkbox subject-item">
-            <label for="${subject.replace(/\\s+/g,'-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
+            <input type="checkbox" id="${subject.replace(/\s+/g, '-')}" value="${subject}" class="hidden subject-checkbox subject-item">
+            <label for="${subject.replace(/\s+/g, '-')}" class="block p-3 border-2 border-gray-600 rounded-lg cursor-pointer text-center">${subject}</label>
           </div>`);
 
         subjectSelectionContainer.innerHTML = `
@@ -760,59 +1220,348 @@
         subjectCheckboxes.forEach(cb => {
           cb.addEventListener('change', () => {
             if (!cb.checked) selectAllCheckbox.checked = false;
-            else if ([...subjectCheckboxes].every(c=>c.checked)) selectAllCheckbox.checked = true;
+            else if ([...subjectCheckboxes].every(c => c.checked)) selectAllCheckbox.checked = true;
           });
         });
       }
 
       // ==== Inicialização ====
       startButton.addEventListener('click', () => {
-        const selected = [...document.querySelectorAll('.subject-item:checked')].map(cb=>cb.value);
-        if (selected.length===0){ subjectWarning.classList.remove('hidden'); return; }
+        const selected = [...document.querySelectorAll('.subject-item:checked')].map(cb => cb.value);
+        if (selected.length === 0) { subjectWarning.classList.remove('hidden'); return; }
         subjectWarning.classList.add('hidden');
 
-        gameQuestions.easy   = allQuestions.easy.filter(q=>selected.includes(q.subject));
-        gameQuestions.medium = allQuestions.medium.filter(q=>selected.includes(q.subject));
-        gameQuestions.hard   = allQuestions.hard.filter(q=>selected.includes(q.subject));
+        gameQuestions.easy = allQuestions.easy.filter(q => selected.includes(q.subject));
+        gameQuestions.medium = allQuestions.medium.filter(q => selected.includes(q.subject));
+        gameQuestions.hard = allQuestions.hard.filter(q => selected.includes(q.subject));
 
-        if (selected.length===1) currentGameCategory = selected[0];
-        else if (selected.length===subjects.length) currentGameCategory = 'Geral';
+        if (selected.length === 1) currentGameCategory = selected[0];
+        else if (selected.length === subjects.length) currentGameCategory = 'Geral';
         else currentGameCategory = '';
 
         initAudio();
         resetGame();
         document.querySelector('main').classList.add('active');
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
       });
 
       modalButton.addEventListener('click', resetGame);
       backToStartButton.addEventListener('click', backToStartScreen);
-      helpSkipBtn.addEventListener('click', ()=>{ if(helps.skip>0){ helps.skip--; helpSkipBtn.classList.add('disabled'); loadQuestion(); }});
-      helpEliminateBtn.addEventListener('click', ()=>{
-        if(helps.eliminate>0){
+      helpSkipBtn.addEventListener('click', () => {
+        if (helps.skip > 0) {
+          helps.skip--;
+          helpSkipBtn.classList.add('disabled');
+          // Marcar que usou ajuda nesta pergunta
+          if (window._ach) {
+            window._ach.usedSkipThisQ = true;
+            window._ach.helpsUsedOverall = true;
+          }
+
+          // Animação de transição suave
+          const mainEl = document.querySelector('main');
+          mainEl.classList.add('is-transitioning');
+          setTimeout(() => {
+            loadQuestion();
+            setTimeout(() => {
+              mainEl.classList.remove('is-transitioning');
+            }, 200);
+          }, 600);
+        }
+      });
+      helpEliminateBtn.addEventListener('click', () => {
+        if (helps.eliminate > 0) {
           helps.eliminate--;
           helpEliminateBtn.classList.add('disabled');
+          // Marcar que usou ajuda nesta pergunta
+          if (window._ach) {
+            window._ach.usedEliminateThisQ = true;
+            window._ach.helpsUsedOverall = true;
+          }
+
           const buttons = Array.from(answersContainer.querySelectorAll('button'));
-          const currentQuestionData = gameQuestions[prizeLevels[currentQuestionIndex].difficulty].find(q=>q.question===questionText.textContent);
+          const currentQuestionData = gameQuestions[prizeLevels[currentQuestionIndex].difficulty].find(q => q.question === questionText.textContent);
           if (!currentQuestionData) return;
           const correctIndex = currentQuestionData.correctIndex;
-          let incorrectButtons = buttons.filter(btn => parseInt(btn.dataset.index)!==correctIndex);
-          // esconder 2 erradas
-          incorrectButtons.slice(0,2).forEach(btn => { btn.style.visibility='hidden'; btn.disabled=true; });
+          let incorrectButtons = buttons.filter(btn => parseInt(btn.dataset.index) !== correctIndex);
+
+          // Animação suave para esconder 2 erradas
+          incorrectButtons.slice(0, 2).forEach((btn, index) => {
+            setTimeout(() => {
+              btn.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+              btn.style.opacity = '0';
+              btn.style.transform = 'scale(0.8)';
+              setTimeout(() => {
+                btn.style.visibility = 'hidden';
+                btn.disabled = true;
+              }, 500);
+            }, index * 200); // Delay escalonado para cada botão
+          });
         }
       });
       stopButton.addEventListener('click', stopGame);
-      rankingButton.addEventListener('click', ()=>displayRanking('Geral'));
-      closeRankingButton.addEventListener('click', ()=>rankingModal.classList.add('hidden'));
+      rankingButton.addEventListener('click', () => displayRanking('Geral'));
+      closeRankingButton.addEventListener('click', () => rankingModal.classList.add('hidden'));
       saveScoreButton?.addEventListener('click', saveScore);
+
+      // Botão de teste para forçar desbloqueio da conquista de integrações
+
+
+
 
       // Carregar UI e dados
       initPrizeTable();
       setupSubjectSelectionShim();
       setupRankingTabsShim();
-      await fetchQuestionsFromFirestore();
+      fetchQuestionsFromFirestore();
       // startButton habilitado no fetch em caso de sucesso
     });
   </script>
+
+  <!-- Container de Toasts em Cascata -->
+  <div id="achievement-toasts-container" class="fixed top-6 right-6 z-50 space-y-3" style="z-index: 9999;"></div>
+
+
+  <!-- Lógica de Conquistas (aditiva) -->
+  <script>
+    (function () {
+      function initAchievements() {
+        const btnOpen = document.getElementById('achievements-button');
+        const modal = document.getElementById('achievements-modal');
+        const btnClose = document.getElementById('close-achievements-button');
+        const listEl = document.getElementById('achievements-list');
+        const progText = document.getElementById('achievements-progress');
+        const progBar = document.getElementById('achievements-progress-bar');
+        const toastsContainer = document.getElementById('achievement-toasts-container');
+
+        if (!btnOpen || !modal || !btnClose || !listEl || !progText || !progBar || !toastsContainer) {
+          console.warn('Conquistas: elementos não encontrados.');
+          return;
+        }
+
+        const ACHIEVEMENTS = [
+          { id: 'platina', name: '👑 Platina do Blingão', key: 'platina', secret: false, group: 'suprema', desc: 'Desbloquear todas as outras conquistas', top: true },
+
+          { id: 'fiscal', name: '📊 Rei do Fiscal', key: 'fiscal', secret: false, group: 'categoria', desc: 'Alcançar R$1.000.000 no Módulo Fiscal' },
+          { id: 'integracoes', name: '🔗 Mestre de Integrações', key: 'integracoes', secret: false, group: 'categoria', desc: 'Alcançar R$1.000.000 no Módulo Integrações' },
+          { id: 'atendimento', name: '☎️ Atendimento com Excelência', key: 'atendimento', secret: false, group: 'categoria', desc: 'Alcançar R$1.000.000 no Módulo Atendimento' },
+          { id: 'outros', name: '🌐 Soberano de Outros', key: 'outros', secret: false, group: 'categoria', desc: 'Alcançar R$1.000.000 no Módulo Outros' },
+
+          { id: 'milionario', name: '💰 Milionário de Mentira', key: 'milionario', secret: false, group: 'desempenho', desc: 'Alcançar R$1.000.000' },
+          { id: 'semrodinhas', name: '🚲 Sem Rodinhas', key: 'semrodinhas', secret: false, group: 'desempenho', desc: 'Alcançar R$1.000.000 sem usar nenhuma ajuda' },
+          { id: 'coracao', name: '❤️ Coração de Aço', key: 'coracao', secret: false, group: 'desempenho', desc: 'Acertar a pergunta de R$1.000.000 em menos de 5 segundos' },
+          { id: 'faztudo', name: '🛠️ Suporte Premium', key: 'faztudo', secret: false, group: 'desempenho', desc: 'Alcançar R$1.000.000 selecionando todos os módulos' },
+          { id: 'enciclopedia', name: '📚 Enciclopédia Viva', key: 'enciclopedia', secret: false, group: 'desempenho', desc: 'Alcançar R$1.000.000 em todos os módulos' },
+          { id: 'velocista', name: '⚡ Velocista', key: 'velocista', secret: false, group: 'desempenho', desc: 'Alcançar R$1.000.000 em até 1 minuto e 30 segundos' },
+
+          { id: 'cirurgiao', name: '🩺 Cirurgião', key: 'cirurgiao', secret: false, group: 'secreta', desc: 'Acertar 10 perguntas seguidas respondendo em menos de 3 segundos cada' },
+          { id: 'maratonista', name: '🏃 Maratonista', key: 'maratonista', secret: false, group: 'secreta', desc: 'Completar 50 partidas' },
+
+          { id: 'milao', name: '😎 Milão, tá bom!', key: 'milao', secret: false, group: 'engracadas', desc: 'Parar na segunda pergunta levando apenas R$1.000' },
+          { id: 'trocados', name: '🪙 Colecionador de Trocados', key: 'trocados', secret: false, group: 'engracadas', desc: 'Errar antes de R$5.000' },
+          { id: 'azarado', name: '🍀 Azarado', key: 'azarado', secret: false, group: 'secreta', desc: 'Errar a primeira pergunta 5 vezes' },
+          { id: 'sempressa', name: '⏰ Sem pressa, ok?', key: 'sempressa', secret: false, group: 'secreta', desc: 'Responder faltando menos de 5 segundos no tempo' },
+        ];
+        const TOTAL = ACHIEVEMENTS.length;
+
+        let unlocked = {};
+        try { unlocked = JSON.parse(localStorage.getItem('blingao_achievements') || '{}') || {}; } catch (e) { unlocked = {}; }
+
+        // Limpar conquistas inválidas (que não existem mais no array)
+        const validIds = ACHIEVEMENTS.map(a => a.id);
+        const cleanedUnlocked = {};
+        Object.keys(unlocked).forEach(id => {
+          if (validIds.includes(id)) {
+            cleanedUnlocked[id] = unlocked[id];
+          }
+        });
+        if (Object.keys(cleanedUnlocked).length !== Object.keys(unlocked).length) {
+          localStorage.setItem('blingao_achievements', JSON.stringify(cleanedUnlocked));
+          unlocked = cleanedUnlocked;
+          console.log('Conquistas inválidas removidas do localStorage');
+        }
+        function save() { localStorage.setItem('blingao_achievements', JSON.stringify(unlocked)); }
+
+
+        // Sistema de toast em cascata
+        let toastCounter = 0;
+        let toastQueue = [];
+        let isShowingToast = false;
+
+        function showToast(msg, emoji = "🏆") {
+          // Adicionar à fila
+          toastQueue.push({ msg, emoji });
+
+          // Se não está mostrando toast, processar a fila
+          if (!isShowingToast) {
+            processToastQueue();
+          }
+        }
+
+        function processToastQueue() {
+          if (toastQueue.length === 0) {
+            isShowingToast = false;
+            return;
+          }
+
+          isShowingToast = true;
+          const { msg, emoji } = toastQueue.shift();
+          showSingleToast(msg, emoji);
+        }
+
+        function showSingleToast(msg, emoji = "🏆") {
+          if (!toastsContainer) {
+            console.log('ERRO: Container de toasts não encontrado');
+            return;
+          }
+
+          // Criar novo toast
+          const toastId = `toast-${toastCounter++}`;
+          const toast = document.createElement('div');
+          toast.id = toastId;
+          toast.className = 'achievement-toast bg-gray-800 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-teal-500 w-96 text-lg font-bold transition-all duration-500 ease-out flex items-center transform translate-x-full opacity-0';
+
+          toast.innerHTML = `
+            <span class="text-3xl mr-4" style="filter: none !important; -webkit-filter: none !important; color: initial !important; text-shadow: none !important; background: none !important;">${emoji}</span>
+            <div class="flex-1 leading-tight">
+              <div class="text-sm text-gray-300">Conquista desbloqueada:</div>
+              <div class="text-lg font-bold">${msg}</div>
+            </div>
+          `;
+
+          // Adicionar ao container
+          toastsContainer.appendChild(toast);
+
+          // Animar entrada
+          setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+            toast.style.opacity = '1';
+          }, 50);
+
+          // Som baixo
+          const audio = document.getElementById("achievement-sound");
+          if (audio) { try { audio.currentTime = 0; audio.volume = 0.3; audio.play(); } catch (e) { } }
+
+          // Remover após 6 segundos (aumentado de 4 para 6)
+          setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+              // Processar próximo toast após 1 segundo de delay
+              setTimeout(() => {
+                processToastQueue();
+              }, 1000);
+            }, 500);
+          }, 6000);
+        }
+
+
+        function renderAchievements() {
+          listEl.innerHTML = '';
+
+          const plat = ACHIEVEMENTS.find(a => a.id === 'platina');
+          const platUnlocked = !!unlocked[plat.id];
+          const platItem = document.createElement('div');
+          platItem.className = 'bg-gray-800 p-4 rounded-lg shadow-md border border-teal-600';
+          platItem.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xl font-black bling-gradient">🏆 ${plat.name}</div>
+                <div class="text-gray-300 text-sm">${plat.desc}</div>
+              </div>
+              <div class="text-sm ${platUnlocked ? 'text-teal-400' : 'text-gray-400'} font-bold">${platUnlocked ? 'DESBLOQUEADA' : 'BLOQUEADA'}</div>
+            </div>`;
+          listEl.appendChild(platItem);
+
+          ACHIEVEMENTS.filter(a => a.id !== 'platina').forEach(a => {
+            const isUnlocked = !!unlocked[a.id];
+            const item = document.createElement('div');
+            item.className = 'bg-gray-800 p-4 rounded-lg shadow-md';
+            const title = (a.secret && !isUnlocked) ? '❓ Conquista secreta' : a.name;
+            const desc = (a.secret && !isUnlocked) ? 'Descubra como desbloquear.' : (a.desc || '');
+            item.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-lg font-bold ${isUnlocked ? 'text-teal-300' : 'text-gray-200'}">${title}</div>
+                  <div class="text-gray-400 text-sm">${desc}</div>
+                </div>
+                <div class="text-sm ${isUnlocked ? 'text-teal-400' : 'text-gray-400'} font-bold">${isUnlocked ? 'DESBLOQUEADA' : 'BLOQUEADA'}</div>
+              </div>`;
+            listEl.appendChild(item);
+          });
+
+          const countUnlocked = Object.values(unlocked).filter(Boolean).length;
+          const pct = Math.floor((countUnlocked / TOTAL) * 100);
+          progText.textContent = `Progresso: ${pct}% (${countUnlocked}/${TOTAL})`;
+          progBar.style.width = `${pct}%`;
+        }
+
+        function unlockAchievement(id) {
+          if (!id) return;
+          if (!unlocked[id]) {
+            unlocked[id] = true;
+            save();
+            const ach = ACHIEVEMENTS.find(a => a.id === id);
+            if (ach) {
+              // Extrair emoji do nome da conquista (método mais direto)
+              const emojiMatch = ach.name.match(/^[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F018}-\u{1F0FF}\u{1F200}-\u{1F2FF}\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/u);
+              let emoji = emojiMatch ? emojiMatch[0] : "🏆";
+
+              // Correção específica para coração de aço
+              if (ach.id === 'coracao') {
+                emoji = "💙"; // Coração azul - mais apropriado para "Coração de Aço"
+              }
+
+              // Correção específica para suporte premium
+              if (ach.id === 'faztudo') {
+                emoji = "🛠️"; // Forçar emoji de ferramentas
+              }
+
+              // Remover emoji do nome para o toast
+              const nameWithoutEmoji = emojiMatch ? ach.name.replace(emojiMatch[0], '').trim() : ach.name;
+
+              showToast(nameWithoutEmoji, emoji);
+              renderAchievements();
+            }
+
+            const others = ACHIEVEMENTS.filter(a => a.id !== 'platina');
+            const allOthersUnlocked = others.every(a => !!unlocked[a.id]);
+            if (allOthersUnlocked && !unlocked['platina']) {
+              unlocked['platina'] = true;
+              save();
+              showToast('🏆 Platina do Blingão desbloqueada!');
+            }
+            renderAchievements();
+          }
+        }
+
+        btnOpen.addEventListener('click', () => modal.classList.remove('hidden'));
+        btnClose.addEventListener('click', () => modal.classList.add('hidden'));
+
+        window.unlockAchievement = unlockAchievement;
+        window.showToast = showToast;
+
+        renderAchievements();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAchievements, { once: true });
+      } else {
+        initAchievements();
+      }
+    })();
+  </script>
+
+
+
+  <audio id="achievement-sound" preload="auto">
+    <source
+      src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAAwACAAAAFAAAAGF1ZGlvZGVtby5tcDM="
+      type="audio/mp3">
+  </audio>
+
 </body>
+
 </html>
